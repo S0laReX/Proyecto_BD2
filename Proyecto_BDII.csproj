@@ -121,6 +121,10 @@
     <Content Include="Default.aspx" />
     <Content Include="favicon.ico" />
     <Content Include="Global.asax" />
+    <Content Include="PantallaADMIN.aspx" />
+    <Content Include="PantallaLOGIN.aspx" />
+    <Content Include="PantallaREGISTRO.aspx" />
+    <Content Include="PantallaUSER.aspx" />
     <Content Include="Scripts\bootstrap.bundle.js" />
     <Content Include="Scripts\bootstrap.bundle.min.js" />
     <Content Include="Scripts\bootstrap.esm.js" />
@@ -208,6 +212,34 @@
     </Compile>
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
+    </Compile>
+    <Compile Include="PantallaADMIN.aspx.cs">
+      <DependentUpon>PantallaADMIN.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="PantallaADMIN.aspx.designer.cs">
+      <DependentUpon>PantallaADMIN.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="PantallaLOGIN.aspx.cs">
+      <DependentUpon>PantallaLOGIN.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="PantallaLOGIN.aspx.designer.cs">
+      <DependentUpon>PantallaLOGIN.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="PantallaREGISTRO.aspx.cs">
+      <DependentUpon>PantallaREGISTRO.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="PantallaREGISTRO.aspx.designer.cs">
+      <DependentUpon>PantallaREGISTRO.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="PantallaUSER.aspx.cs">
+      <DependentUpon>PantallaUSER.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="PantallaUSER.aspx.designer.cs">
+      <DependentUpon>PantallaUSER.aspx</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Site.Master.cs">
