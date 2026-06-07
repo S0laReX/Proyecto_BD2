@@ -13,5 +13,27 @@ namespace Proyecto_BDII
         {
 
         }
+
+        
+        protected void btnIngresar_Click(object sender, EventArgs e)
+        {
+            string email = txtEmail.Text;
+            string contraseña = txtContraseña.Text;
+            if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(contraseña))
+            {
+                lblMensaje.Text = "Por favor, ingrese su correo electrónico y contraseña.";
+            }
+            else
+            {
+                if (email == "hola@ejemplo.com" && contraseña == "123456")
+                {
+                    Response.Redirect("PantallaUSER.aspx");
+                }
+                else
+                {
+                    lblMensaje.Text = "Correo electrónico o contraseña incorrectos.";
+                }
+            }
+        }
     }
 }
