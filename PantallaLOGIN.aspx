@@ -21,7 +21,7 @@
                 <asp:TextBox ID="txtContraseña" runat="server" style="margin-left: 46px"></asp:TextBox>
                 <br />
                 <br />
-                <asp:Label ID="lblMensaje" runat="server" Text="" style="margin-left: 150px"></asp:Label>
+                <asp:Label ID="lblMensaje" runat="server" Text="" style="margin-left: 140px"></asp:Label>
                 <br />
                 <asp:Button ID="btnIngresar" runat="server" Text="INGRESAR" style ="margin-left:123px" Width="112px" OnClick="btnIngresar_Click" />
                 <asp:Button ID="btnRegistro" runat="server" Text="REGISTRO" style ="margin-left:68px" Width="112px"/>
