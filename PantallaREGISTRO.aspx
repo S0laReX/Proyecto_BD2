@@ -1,14 +1,53 @@
 ﻿<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="PantallaREGISTRO.aspx.cs" Inherits="Proyecto_BDII.PantallaREGISTRO" %>
 
 <!DOCTYPE html>
-
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head runat="server">
-    <title></title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <title>Registro de Usuario - Tienda de Celulares</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f6f9; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .register-container { background: #ffffff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 360px; text-align: center; }
+        h2 { color: #333; margin-bottom: 20px; }
+        .form-group { margin-bottom: 12px; text-align: left; }
+        label { display: block; font-size: 14px; margin-bottom: 5px; color: #666; }
+        .form-control { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        .btn-submit { width: 100%; background-color: #28a745; color: white; padding: 10px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; font-weight: bold; margin-top: 10px; }
+        .btn-submit:hover { background-color: #218838; }
+        .msg-box { font-size: 14px; margin-top: 10px; display: block; }
+        .error-msg { color: #dc3545; }
+        .success-msg { color: #28a745; }
+        .login-link { margin-top: 15px; font-size: 14px; }
+        .login-link a { color: #007bff; text-decoration: none; }
+    </style>
 </head>
 <body>
     <form id="form1" runat="server">
-        <div>
+        <div class="register-container">
+            <h2>Crear Cuenta</h2>
+
+            <div class="form-group">
+                <label for="txtNombre">Nombre Completo:</label>
+                <asp:TextBox ID="txtNombre" runat="server" CssClass="form-control" Placeholder="Juan Pérez"></asp:TextBox>
+            </div>
+            
+            <div class="form-group">
+                <label for="txtCorreo">Correo Electrónico:</label>
+                <asp:TextBox ID="txtCorreo" runat="server" CssClass="form-control" TextMode="Email" Placeholder="ejemplo@correo.com"></asp:TextBox>
+            </div>
+
+            <div class="form-group">
+                <label for="txtPassword">Contraseña:</label>
+                <asp:TextBox ID="txtPassword" runat="server" CssClass="form-control" TextMode="Password" Placeholder="Mínimo 6 caracteres"></asp:TextBox>
+            </div>
+
+            <asp:Button ID="btnRegistrar" runat="server" Text="Registrarse" CssClass="btn-submit" OnClick="btnRegistrar_Click" />
+
+            <asp:Label ID="lblMensaje" runat="server" CssClass="msg-box" Visible="false"></asp:Label>
+
+            <div class="login-link">
+                ¿Ya tienes una cuenta? <a href="PantallaLOGIN.aspx">Inicia sesión</a>
+            </div>
         </div>
     </form>
 </body>
