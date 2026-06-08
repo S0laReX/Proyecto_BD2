@@ -12,7 +12,7 @@ namespace Proyecto_BDII
 {
     public partial class PantallaADMIN : System.Web.UI.Page
     {
-        private string conexion = System.Configuration.ConfigurationManager.ConnectionStrings["ConexionBD"].ConnectionString;
+        private string conexion = System.Configuration.ConfigurationManager.ConnectionStrings["Mi Conexion"].ConnectionString;
         private void CargarDatosCel()
         {
             SqlConnection con = new SqlConnection(conexion);
