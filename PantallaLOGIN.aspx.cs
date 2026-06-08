@@ -10,11 +10,9 @@ namespace Proyecto_BDII
 {
     public partial class PantallaLOGIN : System.Web.UI.Page
     {
-        
         protected void Page_Load(object sender, EventArgs e)
         {
 
         }
-
     }
 }
