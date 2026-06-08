@@ -14,10 +14,18 @@ namespace Proyecto_BDII
     {
         protected void Page_Load(object sender, EventArgs e)
         {
+
+            if (Session["Rol"] == null)
+            {
+                Response.Redirect("PantallaLOGIN.aspx");
+            }
+
             if (!IsPostBack)
             {
                 CargarCatálogo();
             }
+
+
         }
 
         private void CargarCatálogo()
@@ -25,27 +33,27 @@ namespace Proyecto_BDII
             string conexionString = ConfigurationManager.ConnectionStrings["Mi Conexion"].ConnectionString;
             string query = "SELECT id_celular, marca, modelo, descripcion, precio, stock FROM celular WHERE stock > 0";
 
-            using (SqlConnection conexion = new SqlConnection(conexionString))
+            SqlConnection conexion = new SqlConnection(conexionString);
+
+            SqlCommand comando = new SqlCommand(query, conexion);
+
+            SqlDataAdapter adaptador = new SqlDataAdapter(comando);
+                    
+            DataTable dtCelulares = new DataTable();
+            try
             {
-                using (SqlCommand comando = new SqlCommand(query, conexion))
-                {
-                    using (SqlDataAdapter adaptador = new SqlDataAdapter(comando))
-                    {
-                        DataTable dtCelulares = new DataTable();
-                        try
-                        {
-                            conexion.Open();
-                            adaptador.Fill(dtCelulares);
-                            repCelulares.DataSource = dtCelulares;
-                            repCelulares.DataBind();
-                        }
-                        catch (Exception ex)
-                        {
-                            System.Diagnostics.Debug.WriteLine("Error: " + ex.Message);
-                        }
-                    }
-                }
+                conexion.Open();
+                adaptador.Fill(dtCelulares);
+                repCelulares.DataSource = dtCelulares;
+                repCelulares.DataBind();
             }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("Error: " + ex.Message);
+            }
+                    
+                
+            
         }
 
         protected void btnVerDetalle_Click(object sender, EventArgs e)
