@@ -22,6 +22,27 @@
 <body>
     <form id="form1" runat="server">
             <div>
+                 <div class="login-container">
+                        <h2>Acceso al Sistema</h2>
+            
+                        <div class="form-group">
+                            <label for="txtCorreo">Correo Electrónico:</label>
+                            <asp:TextBox ID="txtCorreo" runat="server" CssClass="form-control" TextMode="Email" Placeholder="ejemplo@correo.com"></asp:TextBox>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="txtPassword">Contraseña:</label>
+                            <asp:TextBox ID="txtPassword" runat="server" CssClass="form-control" TextMode="Password" Placeholder="******"></asp:TextBox>
+                        </div>
+
+                        <asp:Button ID="btnLogin" runat="server" Text="Ingresar" CssClass="btn-submit" OnClick="btnLogin_Click" />
+
+                        <asp:Label ID="lblMensaje" runat="server" CssClass="error-msg" Visible="false"></asp:Label>
+
+                        <div class="register-link">
+                            ¿No tienes cuenta? <a href="PantallaREGISTRO.aspx">Regístrate aquí</a>
+                        </div>
+                </div>
             </div> 
     </form>
 </body>

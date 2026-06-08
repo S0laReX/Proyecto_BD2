@@ -14,82 +14,65 @@ namespace Proyecto_BDII
     {
         protected void Page_Load(object sender, EventArgs e)
         {
-
-            if (Session["Rol"] == null)
-            {
-                Response.Redirect("PantallaLOGIN.aspx");
-            }
-
+            // Solo cargamos los datos la primera vez, no cuando hacemos clic en un botón (PostBack)
             if (!IsPostBack)
             {
-                CargarCatálogo();
+                CargarDatos();
             }
-
-
         }
 
-        private void CargarCatálogo()
+        // 2. Método básico para traer los datos de SQL Server
+        private void CargarDatos()
         {
+            // Jalamos la conexión de tu web.config
             string conexionString = ConfigurationManager.ConnectionStrings["Mi Conexion"].ConnectionString;
-            string query = "SELECT id_celular, marca, modelo, descripcion, precio, stock FROM celular WHERE stock > 0";
 
-            SqlConnection conexion = new SqlConnection(conexionString);
+            // Consulta directa a tu tabla celular
+            string query = "SELECT id_celular, marca, modelo, descripcion, precio, stock FROM celular";
 
-            SqlCommand comando = new SqlCommand(query, conexion);
-
-            SqlDataAdapter adaptador = new SqlDataAdapter(comando);
-                    
-            DataTable dtCelulares = new DataTable();
-            try
+            using (SqlConnection conexion = new SqlConnection(conexionString))
             {
-                conexion.Open();
-                adaptador.Fill(dtCelulares);
-                repCelulares.DataSource = dtCelulares;
-                repCelulares.DataBind();
+                using (SqlCommand comando = new SqlCommand(query, conexion))
+                {
+                    using (SqlDataAdapter adaptador = new SqlDataAdapter(comando))
+                    {
+                        DataTable tabla = new DataTable();
+
+                        conexion.Open();
+                        adaptador.Fill(tabla); // Llenamos la tabla con los datos
+
+                        // Pegamos los datos al Repeater
+                        reCelulares.DataSource = tabla;
+                        reCelulares.DataBind();
+                        
+
+                        
+                    }
+                }
             }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine("Error: " + ex.Message);
-            }
-                    
-                
-            
         }
 
+        // 3. Evento para el botón "Ver Detalles"
         protected void btnVerDetalle_Click(object sender, EventArgs e)
         {
-            LinkButton btn = (LinkButton)sender;
-            string idCelular = btn.CommandArgument;
-            Response.Redirect($"DetalleProducto.aspx?id={idCelular}");
+            // Capturamos el botón exacto al que le hicieron clic
+            Button btn = (Button)sender;
+
+            // Sacamos el ID que guardamos en el CommandArgument
+            string id = btn.CommandArgument;
+
+            // Lo mandamos a otra página enviando el ID por la URL
+            Response.Redirect("DetalleProducto.aspx?id=" + id);
         }
 
-        // NUEVO MÉTODO PARA EL BOTÓN DE COMPRAR
+        // 4. Evento para el botón "Comprar"
         protected void btnComprar_Click(object sender, EventArgs e)
         {
-            // 1. Control de Seguridad: Si el usuario no se ha logueado, lo mandamos a identificarse
-            if (Session["UsuarioLogueado"] == null)
-            {
-                Response.Redirect("~/Login.aspx");
-                return;
-            }
+            Button btn = (Button)sender;
+            string id = btn.CommandArgument;
 
-            // 2. Extraer el ID del celular seleccionado
-            LinkButton btn = (LinkButton)sender;
-            int idCelular = Convert.ToInt32(btn.CommandArgument);
-
-            // 3. Inicializar la estructura del Carrito de Compras en la Sesión si no existe
-            if (Session["Carrito"] == null)
-            {
-                Session["Carrito"] = new List<int>();
-            }
-
-            // 4. Agregar el ID del celular a la lista del carrito
-            List<int> carrito = (List<int>)Session["Carrito"];
-            carrito.Add(idCelular);
-            Session["Carrito"] = carrito;
-
-            // 5. Redireccionar a la página de procesamiento de la orden o pasarela de pago
-            Response.Redirect("~/Carrito.aspx");
+            // En su versión más básica, mandamos al usuario directo a una página de carrito o pago
+            Response.Redirect("Carrito.aspx?id=" + id);
         }
     }
 }
