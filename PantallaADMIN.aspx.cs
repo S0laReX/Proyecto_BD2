@@ -57,6 +57,10 @@ namespace Proyecto_BDII
 
         protected void Page_Load(object sender, EventArgs e)
         {
+            if (Session["Rol"] == null || Session["Rol"].ToString() != "admin")
+            {
+                Response.Redirect("PantallaLOGIN.aspx");
+            }
             if (!IsPostBack)
             {
                 CargarDatosCel();
