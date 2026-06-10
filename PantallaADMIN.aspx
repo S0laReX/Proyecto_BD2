@@ -26,15 +26,11 @@
                         <asp:BoundField DataField="modelo" HeaderText="MODELO"/>
                         <asp:BoundField DataField="descripcion" HeaderText="DESCRIPCION"/>
 
-                        <%-- Categoria: TemplateField para mostrar nombre en vista normal
-                             y DropDownList al editar --%>
                         <asp:TemplateField HeaderText="CATEGORIA">
                             <ItemTemplate>
-                                <%-- Muestra el nombre de la categoria (viene del JOIN) --%>
                                 <asp:Label ID="LblCategoria" runat="server" Text='<%# Eval("nombre_categoria") %>'></asp:Label>
                             </ItemTemplate>
                             <EditItemTemplate>
-                                <%-- Al editar muestra un DropDownList con todas las categorias --%>
                                 <asp:DropDownList ID="DdlCategoriaEdit" runat="server" DataTextField="nombre_categoria" DataValueField="id_categoria">
                                 </asp:DropDownList>
                             </EditItemTemplate>
@@ -43,7 +39,6 @@
                         <asp:BoundField DataField="precio" HeaderText="PRECIO"/>
                         <asp:BoundField DataField="stock" HeaderText="CANTIDAD STOCK"/>
 
-                        <%-- Imagen: TemplateField para mostrar la primera imagen del celular --%>
                         <asp:TemplateField HeaderText="IMAGEN">
                             <ItemTemplate>
                                 <asp:Image ID="ImgCelular" runat="server"
@@ -52,7 +47,6 @@
                                     Visible='<%# Eval("url_imagen") != DBNull.Value && Eval("url_imagen").ToString() != "" %>'/>
                             </ItemTemplate>
                             <EditItemTemplate>
-                                <%-- Al editar se puede subir una nueva imagen --%>
                                 <asp:FileUpload ID="FuImagenEdit" runat="server" />
                                 <br />
                                 <asp:Image ID="ImgCelularEdit" runat="server"
@@ -151,6 +145,55 @@
                 <asp:Button ID="BtnCrearCateg" runat="server" Text="CREAR" OnClick="BtnCrearCateg_Click"
                     BorderStyle="Double" Font-Bold="true" Font-Size="Large" BackColor="#00ff00"
                     style="display:block; margin: 0 auto;" />
+            </div>
+        </section>
+
+        <br />
+        <hr />
+        <br />
+
+        <%-- ========== HISTORIAL DE VENTAS ========== --%>
+        <section>
+            <div style="text-align:center">
+                <asp:Label ID="Label16" runat="server" Text="HISTORIAL DE VENTAS" Font-Bold="true" Font-Size="Large" Font-Underline="true" ForeColor="#663300"></asp:Label>
+                <br /><br />
+
+                <%-- Busqueda por nombre de usuario --%>
+                <asp:Label ID="Label17" runat="server" Text="Buscar por usuario:"></asp:Label>
+                <asp:TextBox ID="TxtBuscarUsuario" runat="server"></asp:TextBox>
+                &nbsp;
+
+                <%-- Filtro por rango de fechas --%>
+                <asp:Label ID="Label18" runat="server" Text="Fecha desde:"></asp:Label>
+                <asp:TextBox ID="TxtFechaDesde" runat="server" TextMode="Date"></asp:TextBox>
+                &nbsp;
+                <asp:Label ID="Label19" runat="server" Text="Fecha hasta:"></asp:Label>
+                <asp:TextBox ID="TxtFechaHasta" runat="server" TextMode="Date"></asp:TextBox>
+                &nbsp;
+
+                <%-- Orden ascendente / descendente --%>
+                <asp:Button ID="BtnOrdenAsc" runat="server" Text="Fecha ASC" OnClick="BtnOrdenAsc_Click" />
+                &nbsp;
+                <asp:Button ID="BtnOrdenDesc" runat="server" Text="Fecha DESC" OnClick="BtnOrdenDesc_Click" />
+                &nbsp;
+                <asp:Button ID="BtnFiltrarVentas" runat="server" Text="FILTRAR" OnClick="BtnFiltrarVentas_Click" Font-Bold="true" BackColor="#ffff00" />
+                &nbsp;
+                <asp:Button ID="BtnLimpiarFiltros" runat="server" Text="LIMPIAR" OnClick="BtnLimpiarFiltros_Click" />
+
+                <br /><br />
+
+                <asp:GridView ID="GridView3" runat="server"
+                    AutoGenerateColumns="False"
+                    HorizontalAlign="Center">
+                    <Columns>
+                        <asp:BoundField DataField="id_venta"     HeaderText="ID VENTA"/>
+                        <asp:BoundField DataField="nombre"       HeaderText="USUARIO"/>
+                        <asp:BoundField DataField="correo"       HeaderText="CORREO"/>
+                        <asp:BoundField DataField="fecha"        HeaderText="FECHA"        DataFormatString="{0:dd/MM/yyyy HH:mm}"/>
+                        <asp:BoundField DataField="total"        HeaderText="TOTAL"        DataFormatString="{0:C}"/>
+                        <asp:BoundField DataField="estado_venta" HeaderText="ESTADO"/>
+                    </Columns>
+                </asp:GridView>
             </div>
         </section>
 
