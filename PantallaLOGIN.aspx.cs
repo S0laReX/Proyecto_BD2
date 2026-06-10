@@ -35,7 +35,7 @@ namespace Proyecto_BDII
                 return;
             }
 
-            string conectar = ConfigurationManager.ConnectionStrings["CadenaTienda"].ConnectionString;
+            string conectar = ConfigurationManager.ConnectionStrings["Mi Conexion"].ConnectionString;
 
             using (SqlConnection con = new SqlConnection(conectar))
             {
