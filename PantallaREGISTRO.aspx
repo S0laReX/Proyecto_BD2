@@ -40,6 +40,10 @@
                 <label for="txtPassword">Contraseña:</label>
                 <asp:TextBox ID="txtPassword" runat="server" CssClass="form-control" TextMode="Password" Placeholder="Mínimo 6 caracteres"></asp:TextBox>
             </div>
+            <div class="form-group">
+                <label for="txtPassword2">Confirmar Contraseña:</label>
+                <asp:TextBox ID="TextBox1" runat="server" CssClass="form-control" TextMode="Password" Placeholder="Mínimo 6 caracteres"></asp:TextBox>
+            </div>
 
             <asp:Button ID="btnRegistrar" runat="server" Text="Registrarse" CssClass="btn-submit" OnClick="btnRegistrar_Click" />
 
