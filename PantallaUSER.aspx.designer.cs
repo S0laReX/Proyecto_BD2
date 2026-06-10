@@ -24,12 +24,30 @@ namespace Proyecto_BDII
         protected global::System.Web.UI.HtmlControls.HtmlForm form1;
 
         /// <summary>
-        /// reCelulares control.
+        /// repCelulares control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Repeater reCelulares;
+        protected global::System.Web.UI.WebControls.Repeater repCelulares;
+
+        /// <summary>
+        /// lblMensajeFavoritos control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblMensajeFavoritos;
+
+        /// <summary>
+        /// repFavoritos control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Repeater repFavoritos;
     }
 }
