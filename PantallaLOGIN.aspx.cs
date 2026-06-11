@@ -40,7 +40,7 @@ namespace Proyecto_BDII
             using (SqlConnection con = new SqlConnection(conectar))
             {
                 // Nota: En defensas de BD se recomienda usar parámetros para evitar Inyección SQL
-                string query = "SELECT id_usuario, nombre, rol FROM usuario WHERE correo = @correo AND contraseña = @pass";
+                string query = "SELECT id_usuario, correo, nombre, rol FROM usuario WHERE correo = @correo AND contraseña = @pass";
 
                 using (SqlCommand cmd = new SqlCommand(query, con))
                 {
@@ -56,6 +56,7 @@ namespace Proyecto_BDII
                         {
                             // Guardar datos clave en la Sesión
                             Session["UsuarioID"] = leer["id_usuario"].ToString();
+                            Session["Email"] = leer["correo"].ToString();
                             Session["NombreUsuario"] = leer["nombre"].ToString();
                             string rol = leer["rol"].ToString().ToLower();
                             Session["Rol"] = rol;

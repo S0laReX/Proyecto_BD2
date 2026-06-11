@@ -1,15 +1,53 @@
-﻿<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="PantallaUSER.aspx.cs" Inherits="Proyecto_BDII.PantallaUSER" %>
+﻿<%@ Page Language="C#"  AutoEventWireup="true" CodeBehind="PantallaUSER.aspx.cs" Inherits="Proyecto_BDII.PantallaUSER" %>
 
 <!DOCTYPE html>
-
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html lang="es">
 <head runat="server">
-    <title></title>
+    <meta charset="utf-8" />
+    <title>Catálogo de Celulares</title>
 </head>
 <body>
     <form id="form1" runat="server">
-        <div>
-        </div>
+        
+        <h1>Catálogo de Dispositivos</h1>
+        <hr />
+
+        <asp:Repeater ID="repCelulares" runat="server">
+            <ItemTemplate>
+                <div style="border: 1px solid #000; padding: 10px; margin-bottom: 15px; width: 320px; display: inline-block; margin-right: 10px; vertical-align: top;">
+                    <h3><%# Eval("marca") %> <%# Eval("modelo") %></h3>
+                    <p><%# Eval("descripcion") %></p>
+                    <p>
+                        <b>Precio:</b> Bs. <%# Eval("precio") %><br />
+                        <b>Stock:</b> <%# Eval("stock") %>
+                    </p>
+                    
+                    <asp:Button ID="btnVerDetalle" runat="server" Text="Ver Detalles" CommandArgument='<%# Eval("id_celular") %>' OnClick="btnVerDetalle_Click" />
+                    <asp:Button ID="btnComprar" runat="server" Text="Comprar" CommandArgument='<%# Eval("id_celular") %>' OnClick="btnComprar_Click" />
+                    
+                    <asp:Button ID="btnFavorito" runat="server" Text="⭐ Favorito" CommandArgument='<%# Eval("id_celular") %>' OnClick="btnFavorito_Click" />
+                </div>
+            </ItemTemplate>
+        </asp:Repeater>
+
+        <br style="clear:both;" />
+        <br />
+        
+        <h2>Mis Productos Favoritos</h2>
+        <hr />
+        <asp:Label ID="lblMensajeFavoritos" runat="server" ForeColor="Red"></asp:Label>
+        
+        <asp:Repeater ID="repFavoritos" runat="server">
+            <ItemTemplate>
+                <div style="border: 1px solid #FFD700; padding: 10px; margin-bottom: 15px; width: 320px; display: inline-block; margin-right: 10px; vertical-align: top; background-color: #FFFDF0;">
+                    <h3><%# Eval("marca") %> <%# Eval("modelo") %></h3>
+                    <p><b>Precio:</b> Bs. <%# Eval("precio") %></p>
+                    
+                    <asp:Button ID="btnEliminarFavorito" runat="server" Text="❌ Quitar" CommandArgument='<%# Eval("id_celular") %>' OnClick="btnEliminarFavorito_Click" />
+                </div>
+            </ItemTemplate>
+        </asp:Repeater>
+
     </form>
 </body>
 </html>
