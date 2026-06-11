@@ -60,7 +60,7 @@
             box-shadow: 0 4px 8px rgba(0,0,0,0.15);
         }
 
-        /* NUEVO: Estilo para la imagen del producto */
+        
         .producto-img {
             width: 100%;
             height: 180px;
@@ -124,7 +124,7 @@
             transition: background-color 0.3s ease;
         }
 
-        /* NUEVOS COLORES PARA LOS BOTONES DEL CATÁLOGO */
+        
         .btn-detalle {
             background-color: #007bff;
         }
