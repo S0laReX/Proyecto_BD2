@@ -1,4 +1,4 @@
-﻿<%@ Page Language="C#"  AutoEventWireup="true" CodeBehind="PantallaUSER.aspx.cs" Inherits="Proyecto_BDII.PantallaUSER" %>
+﻿<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="PantallaUSER.aspx.cs" Inherits="Proyecto_BDII.PantallaUSER" %>
 
 <!DOCTYPE html>
 <html lang="es">
@@ -60,10 +60,20 @@
             box-shadow: 0 4px 8px rgba(0,0,0,0.15);
         }
 
+        /* NUEVO: Estilo para la imagen del producto */
+        .producto-img {
+            width: 100%;
+            height: 180px;
+            object-fit: contain;
+            margin-bottom: 12px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 8px;
+        }
+
         .producto-card h3 {
             font-size: 18px;
             margin-bottom: 8px;
-            color: #007bff;
+            color: #222;
         }
 
         .producto-card p {
@@ -103,19 +113,37 @@
             flex-wrap: wrap;
         }
 
-        button, asp\\:Button {
+        button, asp\\:Button, .btn-base {
             padding: 8px 12px;
             font-size: 13px;
             border: none;
             border-radius: 4px;
             cursor: pointer;
-            background-color: #007bff;
             color: white;
+            font-weight: bold;
             transition: background-color 0.3s ease;
         }
 
-        button:hover, asp\\:Button:hover {
+        /* NUEVOS COLORES PARA LOS BOTONES DEL CATÁLOGO */
+        .btn-detalle {
+            background-color: #007bff;
+        }
+        .btn-detalle:hover {
             background-color: #0056b3;
+        }
+
+        .btn-comprar {
+            background-color: #28a745;
+        }
+        .btn-comprar:hover {
+            background-color: #218838;
+        }
+
+        .btn-favorito {
+            background-color: #ff9800;
+        }
+        .btn-favorito:hover {
+            background-color: #e68a00;
         }
 
         .btn-peligro {
@@ -153,6 +181,9 @@
             <asp:Repeater ID="repCelulares" runat="server">
                 <ItemTemplate>
                     <div class="producto-card">
+                        
+                        <img src='<%# string.IsNullOrEmpty(Eval("url_imagen").ToString()) ? "https://via.placeholder.com/300x180?text=Sin+Imagen" : Eval("url_imagen") %>' class="producto-img" alt="Celular" />
+
                         <h3><%# Eval("marca") %> <%# Eval("modelo") %></h3>
                         <p><%# Eval("descripcion") %></p>
                         <p>
@@ -161,9 +192,9 @@
                         </p>
                         
                         <div class="botones">
-                            <asp:Button ID="btnVerDetalle" runat="server" Text="Ver Detalles" CommandArgument='<%# Eval("id_celular") %>' OnClick="btnVerDetalle_Click" />
-                            <asp:Button ID="btnComprar" runat="server" Text="Comprar" CommandArgument='<%# Eval("id_celular") %>' OnClick="btnComprar_Click" />
-                            <asp:Button ID="btnFavorito" runat="server" Text="⭐ Favorito" CommandArgument='<%# Eval("id_celular") %>' OnClick="btnFavorito_Click" />
+                            <asp:Button ID="btnVerDetalle" runat="server" Text="Ver Detalles" CssClass="btn-base btn-detalle" CommandArgument='<%# Eval("id_celular") %>' OnClick="btnVerDetalle_Click" />
+                            <asp:Button ID="btnComprar" runat="server" Text="Comprar" CssClass="btn-base btn-comprar" CommandArgument='<%# Eval("id_celular") %>' OnClick="btnComprar_Click" />
+                            <asp:Button ID="btnFavorito" runat="server" Text="⭐ Favorito" CssClass="btn-base btn-favorito" CommandArgument='<%# Eval("id_celular") %>' OnClick="btnFavorito_Click" />
                         </div>
                     </div>
                 </ItemTemplate>
@@ -182,7 +213,7 @@
                         <p><b>Precio:</b> Bs. <%# Eval("precio") %></p>
                         
                         <div class="botones">
-                            <asp:Button ID="btnEliminarFavorito" runat="server" Text="❌ Quitar" CssClass="btn-peligro" CommandArgument='<%# Eval("id_celular") %>' OnClick="btnEliminarFavorito_Click" />
+                            <asp:Button ID="btnEliminarFavorito" runat="server" Text="❌ Quitar" CssClass="btn-base btn-peligro" CommandArgument='<%# Eval("id_celular") %>' OnClick="btnEliminarFavorito_Click" />
                         </div>
                     </div>
                 </ItemTemplate>

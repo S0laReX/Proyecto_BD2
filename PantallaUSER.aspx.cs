@@ -32,20 +32,21 @@ namespace Proyecto_BDII
 
         private void CargarCatálogo()
         {
-            string query = "SELECT id_celular, marca, modelo, descripcion, precio, stock FROM celular";
+            // CORRECCIÓN: Agregamos la subconsulta para extraer la primera imagen asociada al id_celular
+            string query = @"SELECT id_celular, marca, modelo, descripcion, precio, stock,
+                     (SELECT TOP 1 url_imagen FROM celular_imagen WHERE celular_imagen.id_celular = celular.id_celular) AS url_imagen 
+                     FROM celular";
 
-            // 1. Instanciamos los objetos de forma tradicional
+            // Mantenemos tu flujo tradicional exacto sin bloques using
             SqlConnection conexion = new SqlConnection(conexionString);
             SqlCommand comando = new SqlCommand(query, conexion);
             SqlDataAdapter adaptador = new SqlDataAdapter(comando);
             DataTable tabla = new DataTable();
 
-            // 2. Abrimos, ejecutamos y CERRAMOS explícitamente
             conexion.Open();
             adaptador.Fill(tabla);
-            conexion.Close(); // ¡Muy importante!
+            conexion.Close();
 
-            // 3. Asignamos los datos a la interfaz
             repCelulares.DataSource = tabla;
             repCelulares.DataBind();
         }
