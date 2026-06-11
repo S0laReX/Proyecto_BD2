@@ -1,7 +1,7 @@
-﻿using System;
+using System;
 using System.Configuration;
-using System.Data;
 using System.Data.SqlClient;
+using System.Text;
 using System.Web.UI;
 
 namespace Proyecto_BDII
@@ -17,21 +17,17 @@ namespace Proyecto_BDII
                 Response.Redirect("PantallaLOGIN.aspx");
                 return;
             }
-
             if (!IsPostBack)
             {
                 if (Request.QueryString["id"] != null)
                 {
                     txtCantidad.Text = "1";
-                    string idCelular = Request.QueryString["id"];
-                    CargarItemCarrito(idCelular);
+                    CargarItemCarrito(Request.QueryString["id"]);
                 }
                 else
                 {
                     lblMensaje.ForeColor = System.Drawing.Color.Red;
-                    lblMensaje.Text = "No hay productos seleccionados en el carrito.";
-
-                    // Si entra sin ID, también mostramos el botón nuevo para que no se quede atrapado
+                    lblMensaje.Text = "No hay productos seleccionados.";
                     btnIrCatalogo.Visible = true;
                 }
             }
@@ -39,71 +35,53 @@ namespace Proyecto_BDII
 
         private void CargarItemCarrito(string idCelular)
         {
-            string query = "SELECT marca, modelo, precio, stock FROM celular WHERE id_celular = @IdCelular";
-
-            SqlConnection conexion = new SqlConnection(conexionString);
-            SqlCommand comando = new SqlCommand(query, conexion);
-            comando.Parameters.AddWithValue("@IdCelular", idCelular);
-
-            conexion.Open();
-            SqlDataReader reader = comando.ExecuteReader();
-
-            if (reader.Read())
+            SqlConnection con = new SqlConnection(conexionString);
+            SqlCommand cmd = new SqlCommand("SELECT marca, modelo, precio, stock FROM celular WHERE id_celular=@id", con);
+            cmd.Parameters.AddWithValue("@id", idCelular);
+            con.Open();
+            SqlDataReader r = cmd.ExecuteReader();
+            if (r.Read())
             {
-                int stockDisponible = Convert.ToInt32(reader["stock"]);
-
-                if (stockDisponible <= 0)
+                int stock = Convert.ToInt32(r["stock"]);
+                if (stock <= 0)
                 {
                     lblMensaje.ForeColor = System.Drawing.Color.Red;
-                    lblMensaje.Text = "Lo sentimos, este dispositivo se encuentra temporalmente agotado.";
-                    pnlCarrito.Visible = false;
-
-                    // Mostramos el botón nuevo si está agotado
+                    lblMensaje.Text = "Este dispositivo está temporalmente agotado.";
                     btnIrCatalogo.Visible = true;
                 }
                 else
                 {
                     pnlCarrito.Visible = true;
-                    litProducto.Text = reader["marca"].ToString() + " " + reader["modelo"].ToString();
-
-                    decimal precio = Convert.ToDecimal(reader["precio"]);
+                    litProducto.Text = r["marca"] + " " + r["modelo"];
+                    decimal precio = Convert.ToDecimal(r["precio"]);
                     litPrecioUnitario.Text = string.Format("{0:N2}", precio);
                     litTotal.Text = string.Format("{0:N2}", precio);
-
-                    txtCantidad.Attributes.Add("max", stockDisponible.ToString());
+                    txtCantidad.Attributes.Add("max", stock.ToString());
                 }
             }
             else
             {
                 lblMensaje.ForeColor = System.Drawing.Color.Red;
-                lblMensaje.Text = "El artículo solicitado no existe.";
+                lblMensaje.Text = "El artículo no existe.";
                 btnIrCatalogo.Visible = true;
             }
-
-            conexion.Close();
+            con.Close();
         }
 
         protected void txtCantidad_TextChanged(object sender, EventArgs e)
         {
-            if (string.IsNullOrEmpty(txtCantidad.Text) || Convert.ToInt32(txtCantidad.Text) < 1)
-            {
+            int cant;
+            if (!int.TryParse(txtCantidad.Text, out cant) || cant < 1)
                 txtCantidad.Text = "1";
-            }
-
-            decimal precioUnitario = Convert.ToDecimal(litPrecioUnitario.Text);
-            int cantidad = Convert.ToInt32(txtCantidad.Text);
-
-            decimal totalCalculado = precioUnitario * cantidad;
-            litTotal.Text = string.Format("{0:N2}", totalCalculado);
+            decimal precio = Convert.ToDecimal(litPrecioUnitario.Text);
+            litTotal.Text = string.Format("{0:N2}", precio * Convert.ToInt32(txtCantidad.Text));
         }
 
-        // EVENTO DEL BOTÓN ORIGINAL (Cancela y vuelve ANTES de comprar)
         protected void btnRegresar_Click(object sender, EventArgs e)
         {
             Response.Redirect("PantallaUSER.aspx");
         }
 
-        // EVENTO DEL NUEVO BOTÓN (Regresa DESPUÉS de un error o compra exitosa)
         protected void btnIrCatalogo_Click(object sender, EventArgs e)
         {
             Response.Redirect("PantallaUSER.aspx");
@@ -113,63 +91,84 @@ namespace Proyecto_BDII
         {
             int idUsuario = Convert.ToInt32(Session["UsuarioID"]);
             int idCelular = Convert.ToInt32(Request.QueryString["id"]);
-            int cantidadSolicitada = Convert.ToInt32(txtCantidad.Text);
-            decimal totalVenta = Convert.ToDecimal(litTotal.Text);
-            decimal precioUnitario = Convert.ToDecimal(litPrecioUnitario.Text);
+            int cantidad = Convert.ToInt32(txtCantidad.Text);
+            decimal total = Convert.ToDecimal(litTotal.Text);
+            decimal precioUnit = Convert.ToDecimal(litPrecioUnitario.Text);
 
-            SqlConnection conexion = new SqlConnection(conexionString);
-            conexion.Open();
+            SqlConnection con = new SqlConnection(conexionString);
+            con.Open();
 
-            string sqlCheckStock = "SELECT stock FROM celular WHERE id_celular = @IdCelular";
-            SqlCommand cmdCheck = new SqlCommand(sqlCheckStock, conexion);
-            cmdCheck.Parameters.AddWithValue("@IdCelular", idCelular);
-            int stockActual = Convert.ToInt32(cmdCheck.ExecuteScalar());
+            SqlCommand cmdStock = new SqlCommand("SELECT stock FROM celular WHERE id_celular=@id", con);
+            cmdStock.Parameters.AddWithValue("@id", idCelular);
+            int stockActual = Convert.ToInt32(cmdStock.ExecuteScalar());
 
-            if (cantidadSolicitada > stockActual)
+            if (cantidad > stockActual)
             {
                 lblMensaje.ForeColor = System.Drawing.Color.Red;
-                lblMensaje.Text = "Error: No puedes adquirir esa cantidad. El stock disponible real es de " + stockActual + " unidades.";
-                conexion.Close();
+                lblMensaje.Text = "Stock disponible: " + stockActual + " unidades.";
+                con.Close();
                 return;
             }
 
-            string sqlVenta = @"INSERT INTO venta (id_usuario, fecha, total, estado_venta) 
-                                VALUES (@IdUsuario, GETDATE(), @Total, 'completado');
-                                SELECT SCOPE_IDENTITY();";
+            SqlCommand cmdDir = new SqlCommand("SELECT ISNULL(direccion,'') FROM usuario WHERE id_usuario=@id", con);
+            cmdDir.Parameters.AddWithValue("@id", idUsuario);
+            string direccion = cmdDir.ExecuteScalar().ToString();
 
-            SqlCommand cmdVenta = new SqlCommand(sqlVenta, conexion);
-            cmdVenta.Parameters.AddWithValue("@IdUsuario", idUsuario);
-            cmdVenta.Parameters.AddWithValue("@Total", totalVenta);
+            SqlCommand cmdProv = new SqlCommand("SELECT TOP 1 id_proveedor FROM proveedor ORDER BY NEWID()", con);
+            object resProv = cmdProv.ExecuteScalar();
+            int idProveedor = resProv != null ? Convert.ToInt32(resProv) : 1;
 
-            int idVentaGenerada = Convert.ToInt32(cmdVenta.ExecuteScalar());
+            SqlCommand cmdV = new SqlCommand(@"INSERT INTO venta (id_usuario, fecha, total, estado_venta, direccion_envio, id_proveedor_envio)
+                VALUES (@u, GETDATE(), @t, 'completado', @dir, @prov); SELECT SCOPE_IDENTITY();", con);
+            cmdV.Parameters.AddWithValue("@u", idUsuario);
+            cmdV.Parameters.AddWithValue("@t", total);
+            cmdV.Parameters.AddWithValue("@dir", direccion);
+            cmdV.Parameters.AddWithValue("@prov", idProveedor);
+            int idVenta = Convert.ToInt32(cmdV.ExecuteScalar());
 
-            string sqlDetalle = @"INSERT INTO detalle_venta (id_venta, id_celular, cantidad, precio_unitario, subtotal) 
-                                  VALUES (@IdVenta, @IdCelular, @Cantidad, @PrecioUnitario, @Subtotal)";
+            SqlCommand cmdDV = new SqlCommand(@"INSERT INTO detalle_venta (id_venta, id_celular, cantidad, precio_unitario, subtotal)
+                VALUES (@v, @c, @cant, @pu, @sub)", con);
+            cmdDV.Parameters.AddWithValue("@v", idVenta);
+            cmdDV.Parameters.AddWithValue("@c", idCelular);
+            cmdDV.Parameters.AddWithValue("@cant", cantidad);
+            cmdDV.Parameters.AddWithValue("@pu", precioUnit);
+            cmdDV.Parameters.AddWithValue("@sub", total);
+            cmdDV.ExecuteNonQuery();
 
-            SqlCommand cmdDetalle = new SqlCommand(sqlDetalle, conexion);
-            cmdDetalle.Parameters.AddWithValue("@IdVenta", idVentaGenerada);
-            cmdDetalle.Parameters.AddWithValue("@IdCelular", idCelular);
-            cmdDetalle.Parameters.AddWithValue("@Cantidad", cantidadSolicitada);
-            cmdDetalle.Parameters.AddWithValue("@PrecioUnitario", precioUnitario);
-            cmdDetalle.Parameters.AddWithValue("@Subtotal", totalVenta);
+            SqlCommand cmdSt = new SqlCommand("UPDATE celular SET stock=stock-@cant WHERE id_celular=@c", con);
+            cmdSt.Parameters.AddWithValue("@cant", cantidad);
+            cmdSt.Parameters.AddWithValue("@c", idCelular);
+            cmdSt.ExecuteNonQuery();
 
-            cmdDetalle.ExecuteNonQuery();
+            SqlCommand cmdMov = new SqlCommand(@"INSERT INTO movimiento_inventario (id_celular, tipo_movimiento, cantidad, motivo, id_usuario_responsable)
+                VALUES (@c, 'salida', @cant, @motivo, @u)", con);
+            cmdMov.Parameters.AddWithValue("@c", idCelular);
+            cmdMov.Parameters.AddWithValue("@cant", cantidad);
+            cmdMov.Parameters.AddWithValue("@motivo", "Venta #" + idVenta);
+            cmdMov.Parameters.AddWithValue("@u", idUsuario);
+            cmdMov.ExecuteNonQuery();
 
-            string sqlUpdateStock = "UPDATE celular SET stock = stock - @Cantidad WHERE id_celular = @IdCelular";
-            SqlCommand cmdUpdate = new SqlCommand(sqlUpdateStock, conexion);
-            cmdUpdate.Parameters.AddWithValue("@Cantidad", cantidadSolicitada);
-            cmdUpdate.Parameters.AddWithValue("@IdCelular", idCelular);
+            SqlCommand cmdCI = new SqlCommand("SELECT ISNULL(ci,'') FROM usuario WHERE id_usuario=@id", con);
+            cmdCI.Parameters.AddWithValue("@id", idUsuario);
+            string ci = cmdCI.ExecuteScalar().ToString();
 
-            cmdUpdate.ExecuteNonQuery();
+            string numFact = "FACT-" + DateTime.Now.Year + "-" + idVenta.ToString("D4");
+            string nombreCliente = Session["NombreUsuario"] != null ? Session["NombreUsuario"].ToString() : "Cliente";
 
-            conexion.Close();
+            SqlCommand cmdFact = new SqlCommand(@"INSERT INTO factura (id_venta, numero_factura, fecha_emision, razon_social, nit_ci_cliente, monto_total, metodo_pago)
+                VALUES (@v, @num, GETDATE(), @rs, @ci, @mt, 'efectivo')", con);
+            cmdFact.Parameters.AddWithValue("@v", idVenta);
+            cmdFact.Parameters.AddWithValue("@num", numFact);
+            cmdFact.Parameters.AddWithValue("@rs", nombreCliente);
+            cmdFact.Parameters.AddWithValue("@ci", ci);
+            cmdFact.Parameters.AddWithValue("@mt", total);
+            cmdFact.ExecuteNonQuery();
 
-            // AL FINALIZAR: Ocultamos el carrito completo y mostramos el mensaje con el nuevo botón
+            con.Close();
+
             pnlCarrito.Visible = false;
             lblMensaje.ForeColor = System.Drawing.Color.Green;
-            lblMensaje.Text = "¡Compra procesada con éxito! Tu orden ha sido registrada.";
-
-            // Aquí activamos el nuevo botón de regreso
+            lblMensaje.Text = "¡Compra procesada! Factura: " + numFact;
             btnIrCatalogo.Visible = true;
         }
     }

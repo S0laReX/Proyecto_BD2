@@ -1,12 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
+using System;
 using System.Configuration;
 using System.Data.SqlClient;
-using System.Linq;
-using System.Text.RegularExpressions;
-using System.Web;
+using System.Security.Cryptography;
+using System.Text;
 using System.Web.UI;
-using System.Web.UI.WebControls;
 
 namespace Proyecto_BDII
 {
@@ -14,10 +11,18 @@ namespace Proyecto_BDII
     {
         protected void Page_Load(object sender, EventArgs e)
         {
-            // Opcional: limpiar mensajes previos en recargas de página
             if (!IsPostBack)
-            {
                 lblMensaje.Visible = false;
+        }
+
+        private string HashSHA256(string texto)
+        {
+            using (SHA256 sha = SHA256.Create())
+            {
+                byte[] bytes = sha.ComputeHash(Encoding.UTF8.GetBytes(texto));
+                StringBuilder sb = new StringBuilder();
+                foreach (byte b in bytes) sb.Append(b.ToString("X2"));
+                return sb.ToString();
             }
         }
 
@@ -25,114 +30,84 @@ namespace Proyecto_BDII
         {
             string nombre = txtNombre.Text.Trim();
             string correo = txtCorreo.Text.Trim();
-            string password = txtPassword.Text.Trim();
-            string confirmarPassword = TextBox1.Text.Trim(); // Mapeado al ID="TextBox1" de tu ASPX
+            string ci = txtCI.Text.Trim();
+            string telefono = txtTelefono.Text.Trim();
+            string direccion = txtDireccion.Text.Trim();
+            string password = txtPassword.Text;
+            string password2 = txtPassword2.Text;
 
-            // 1. Validación de campos vacíos
-            if (string.IsNullOrEmpty(nombre) || string.IsNullOrEmpty(correo) || string.IsNullOrEmpty(password) || string.IsNullOrEmpty(confirmarPassword))
+            if (string.IsNullOrEmpty(nombre) || string.IsNullOrEmpty(correo) || string.IsNullOrEmpty(ci) || string.IsNullOrEmpty(password))
             {
-                MostrarMensaje("Todos los campos son obligatorios.", true);
+                Msg("Nombre, correo, C.I. y contraseña son obligatorios.", true);
                 return;
             }
 
-            // 2. Validación de coincidencia de contraseñas
-            if (password != confirmarPassword)
+            if (password != password2)
             {
-                MostrarMensaje("Las contraseñas ingresadas no coinciden.", true);
+                Msg("Las contraseñas no coinciden.", true);
                 return;
             }
 
-            // 3. Validación de complejidad de la contraseña (Mínimo 8 caracteres)
             if (password.Length < 8)
             {
-                MostrarMensaje("La contraseña debe tener una longitud mínima de 8 caracteres.", true);
+                Msg("La contraseña debe tener al menos 8 caracteres.", true);
                 return;
             }
 
-            // 4. Validación de caracteres especiales (Mínimo 3)
-            // Esta expresión regular cuenta cuántos caracteres que NO son letras ni números existen
-            int cantidadEspeciales = Regex.Matches(password, @"[^a-zA-Z0-9]").Count;
-            if (cantidadEspeciales < 3)
+            bool tieneMayuscula = false;
+            bool tieneNumero = false;
+            foreach (char c in password)
             {
-                MostrarMensaje("La contraseña debe contener al menos 3 caracteres especiales (Ej: @, #, $, %, *, !, ?).", true);
+                if (char.IsUpper(c)) tieneMayuscula = true;
+                if (char.IsDigit(c)) tieneNumero = true;
+            }
+
+            if (!tieneMayuscula || !tieneNumero)
+            {
+                Msg("La contraseña debe tener al menos 1 mayúscula y 1 número.", true);
                 return;
             }
 
+            string hash = HashSHA256(password);
             string conectar = ConfigurationManager.ConnectionStrings["Mi Conexion"].ConnectionString;
 
             using (SqlConnection con = new SqlConnection(conectar))
             {
-                // Validación previa para evitar la duplicidad de correos electrónicos en el sistema
-                string verificarQuery = "SELECT COUNT(*) FROM usuario WHERE correo = @correo";
-
-                using (SqlCommand cmdVerificar = new SqlCommand(verificarQuery, con))
+                con.Open();
+                string verificar = "SELECT COUNT(*) FROM usuario WHERE correo = @correo";
+                using (SqlCommand cmd = new SqlCommand(verificar, con))
                 {
-                    cmdVerificar.Parameters.AddWithValue("@correo", correo);
-
-                    try
+                    cmd.Parameters.AddWithValue("@correo", correo);
+                    int existe = (int)cmd.ExecuteScalar();
+                    if (existe > 0)
                     {
-                        con.Open();
-                        int usuarioExistente = (int)cmdVerificar.ExecuteScalar();
-
-                        if (usuarioExistente > 0)
-                        {
-                            MostrarMensaje("Este correo electrónico ya se encuentra registrado.", true);
-                            return;
-                        }
-
-                        // Inserción limpia del nuevo usuario usando parámetros para evitar Inyección SQL
-                        string insertQuery = "INSERT INTO usuario (nombre, correo, contraseña, rol, estado_2fa) VALUES (@nombre, @correo, @pass, 'cliente', 0)";
-
-                        using (SqlCommand cmdInsert = new SqlCommand(insertQuery, con))
-                        {
-                            cmdInsert.Parameters.AddWithValue("@nombre", nombre);
-                            cmdInsert.Parameters.AddWithValue("@correo", correo);
-                            cmdInsert.Parameters.AddWithValue("@pass", password); // En entornos de producción real se recomienda encriptar (Hashing)
-
-                            int filasAfectadas = cmdInsert.ExecuteNonQuery();
-
-                            if (filasAfectadas > 0)
-                            {
-                                MostrarMensaje("¡Registro exitoso! Redirigiendo al inicio de sesión...", false);
-                                // Genera un retraso controlado de 2 segundos antes de redirigir a la pantalla de Login
-                                Response.AppendHeader("Refresh", "2;url=PantallaLOGIN.aspx");
-                            }
-                            else
-                            {
-                                MostrarMensaje("No se pudo completar el proceso de registro en el servidor.", true);
-                            }
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        MostrarMensaje("Error crítico al registrar: " + ex.Message, true);
-                    }
-                    finally
-                    {
-                        if (con.State == System.Data.ConnectionState.Open)
-                        {
-                            con.Close();
-                        }
+                        Msg("Este correo ya está registrado.", true);
+                        return;
                     }
                 }
+
+                string insert = "INSERT INTO usuario (nombre, correo, contrasena, ci, telefono, direccion, rol) VALUES (@nombre, @correo, @pass, @ci, @tel, @dir, 'cliente')";
+                using (SqlCommand cmd = new SqlCommand(insert, con))
+                {
+                    cmd.Parameters.AddWithValue("@nombre", nombre);
+                    cmd.Parameters.AddWithValue("@correo", correo);
+                    cmd.Parameters.AddWithValue("@pass", hash);
+                    cmd.Parameters.AddWithValue("@ci", ci);
+                    cmd.Parameters.AddWithValue("@tel", string.IsNullOrEmpty(telefono) ? (object)DBNull.Value : telefono);
+                    cmd.Parameters.AddWithValue("@dir", string.IsNullOrEmpty(direccion) ? (object)DBNull.Value : direccion);
+                    cmd.ExecuteNonQuery();
+                }
             }
+
+            Msg("¡Registro exitoso! Redirigiendo...", false);
+            Response.AppendHeader("Refresh", "2;url=PantallaLOGIN.aspx");
         }
 
-        private void MostrarMensaje(string texto, bool esError)
+        private void Msg(string texto, bool esError)
         {
             lblMensaje.Text = texto;
             lblMensaje.Visible = true;
-            if (esError)
-            {
-                // Cambia el estilo visual dinámicamente si cuentas con clases de Bootstrap o CSS personalizado
-                lblMensaje.ForeColor = System.Drawing.Color.Red;
-                lblMensaje.CssClass = "msg-box error-msg";
-            }
-            else
-            {
-                lblMensaje.ForeColor = System.Drawing.Color.Green;
-                lblMensaje.CssClass = "msg-box success-msg";
-            }
+            lblMensaje.CssClass = esError ? "msg-error" : "msg-ok";
         }
     }
 }
