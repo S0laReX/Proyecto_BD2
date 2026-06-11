@@ -34,7 +34,7 @@
             color: #222;
         }
 
-        /* Tarjeta contenedora principal del detalle */
+        
         .detalle-wrapper {
             border: 1px solid #ddd;
             border-radius: 5px;
@@ -46,7 +46,7 @@
             flex-wrap: wrap;
         }
 
-        /* Sector Izquierdo: Imágenes */
+        
         .seccion-galeria {
             flex: 1;
             min-width: 300px;
@@ -81,7 +81,7 @@
             background-color: #fff;
         }
 
-        /* Sector Derecho: Información */
+        
         .seccion-info {
             flex: 1.2;
             min-width: 320px;
@@ -129,7 +129,7 @@
             margin-bottom: 25px;
         }
 
-        /* Botones de acción inferiores */
+        
         .botones-accion {
             margin-top: auto;
             display: flex;

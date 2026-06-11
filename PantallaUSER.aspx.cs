@@ -32,12 +32,11 @@ namespace Proyecto_BDII
 
         private void CargarCatálogo()
         {
-            // CORRECCIÓN: Agregamos la subconsulta para extraer la primera imagen asociada al id_celular
+            
             string query = @"SELECT id_celular, marca, modelo, descripcion, precio, stock,
                      (SELECT TOP 1 url_imagen FROM celular_imagen WHERE celular_imagen.id_celular = celular.id_celular) AS url_imagen 
                      FROM celular";
 
-            // Mantenemos tu flujo tradicional exacto sin bloques using
             SqlConnection conexion = new SqlConnection(conexionString);
             SqlCommand comando = new SqlCommand(query, conexion);
             SqlDataAdapter adaptador = new SqlDataAdapter(comando);
@@ -62,7 +61,7 @@ namespace Proyecto_BDII
             lblMensajeFavoritos.Text = "";
             string correoUsuario = Session["Email"].ToString();
 
-            // Seleccionamos también c.id_celular para enlazarlo al botón Quitar
+            
             string query = @"SELECT c.id_celular, c.marca, c.modelo, c.precio 
                              FROM favorito f 
                              INNER JOIN celular c ON f.id_celular = c.id_celular
@@ -121,7 +120,7 @@ namespace Proyecto_BDII
 
             if (idUsuario > 0)
             {
-                // CORRECCIÓN: Ahora @IdUsuario se envía directamente desde C# como parámetro completo
+
                 string query = @"IF NOT EXISTS (SELECT 1 FROM favorito WHERE id_usuario = @IdUsuario AND id_celular = @IdCelular)
                                  BEGIN
                                      INSERT INTO favorito (id_usuario, id_celular) VALUES (@IdUsuario, @IdCelular);
@@ -144,14 +143,14 @@ namespace Proyecto_BDII
         protected void btnEliminarFavorito_Click(object sender, EventArgs e)
         {
             Button btn = (Button)sender;
-            int idCelular = Convert.ToInt32(btn.CommandArgument); // Recibe el id_celular del HTML
+            int idCelular = Convert.ToInt32(btn.CommandArgument); 
             string correoUsuario = Session["Email"].ToString();
 
             int idUsuario = ObtenerIdUsuario(correoUsuario);
 
             if (idUsuario > 0)
             {
-                // CORRECCIÓN: Borramos buscando por el par de llaves correctas de forma unívoca
+                
                 string query = "DELETE FROM favorito WHERE id_usuario = @IdUsuario AND id_celular = @IdCelular";
 
                 SqlConnection conexion = new SqlConnection(conexionString);

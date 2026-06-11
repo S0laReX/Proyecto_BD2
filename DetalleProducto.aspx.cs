@@ -12,7 +12,7 @@ namespace Proyecto_BDII
 
         protected void Page_Load(object sender, EventArgs e)
         {
-            // Mantenemos la seguridad de roles que aplicaste en tu pantallaUSER
+            
             if (Session["Rol"] == null)
             {
                 Response.Redirect("PantallaLOGIN.aspx");
@@ -21,7 +21,7 @@ namespace Proyecto_BDII
 
             if (!IsPostBack)
             {
-                // Validamos que el ID venga correctamente por la URL
+                
                 if (Request.QueryString["id"] != null)
                 {
                     string idCelular = Request.QueryString["id"];
@@ -37,7 +37,7 @@ namespace Proyecto_BDII
 
         private void CargarDetalleCelular(string idCelular)
         {
-            // Consulta relacional cruzando celular con su categoría
+            
             string query = @"SELECT c.marca, c.modelo, c.descripcion, c.precio, c.stock, cat.nombre_categoria, cat.icono 
                              FROM celular c
                              LEFT JOIN categoria cat ON c.id_categoria = cat.id_categoria
@@ -52,9 +52,9 @@ namespace Proyecto_BDII
 
             if (reader.Read())
             {
-                pnlDetalle.Visible = true; // Mostramos el bloque visual
+                pnlDetalle.Visible = true; 
 
-                // Asignamos los datos a los controles literales
+                
                 string icono = reader["icono"] != DBNull.Value ? reader["icono"].ToString() : "📱";
                 string catNombre = reader["nombre_categoria"] != DBNull.Value ? reader["nombre_categoria"].ToString() : "General";
 
@@ -69,7 +69,7 @@ namespace Proyecto_BDII
                 lblMensaje.Text = "El producto solicitado no existe en nuestro sistema.";
             }
 
-            conexion.Close(); // ¡Cierre explícito sin bloque using!
+            conexion.Close(); 
         }
 
         private void CargarGaleriaImagenes(string idCelular)
@@ -85,14 +85,14 @@ namespace Proyecto_BDII
 
             conexion.Open();
             adaptador.Fill(tablaImg);
-            conexion.Close(); // ¡Cierre explícito!
+            conexion.Close(); 
 
             if (tablaImg.Rows.Count > 0)
             {
-                // Colocamos la primera imagen encontrada como la principal de la tarjeta
+                
                 imgPrincipal.ImageUrl = tablaImg.Rows[0]["url_imagen"].ToString();
 
-                // El resto lo enlazamos al repeater de las miniaturas inferiores
+                
                 repImagenes.DataSource = tablaImg;
                 repImagenes.DataBind();
             }

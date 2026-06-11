@@ -134,7 +134,7 @@
             font-weight: bold;
         }
 
-        /* Clase para dar margen al nuevo botón de regreso post-compra */
+        
         .btn-post-compra {
             margin-top: 10px;
             margin-bottom: 20px;

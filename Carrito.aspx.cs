@@ -31,7 +31,7 @@ namespace Proyecto_BDII
                     lblMensaje.ForeColor = System.Drawing.Color.Red;
                     lblMensaje.Text = "No hay productos seleccionados en el carrito.";
 
-                    // Si entra sin ID, también mostramos el botón nuevo para que no se quede atrapado
+                    
                     btnIrCatalogo.Visible = true;
                 }
             }
@@ -58,7 +58,7 @@ namespace Proyecto_BDII
                     lblMensaje.Text = "Lo sentimos, este dispositivo se encuentra temporalmente agotado.";
                     pnlCarrito.Visible = false;
 
-                    // Mostramos el botón nuevo si está agotado
+                    
                     btnIrCatalogo.Visible = true;
                 }
                 else
@@ -97,13 +97,13 @@ namespace Proyecto_BDII
             litTotal.Text = string.Format("{0:N2}", totalCalculado);
         }
 
-        // EVENTO DEL BOTÓN ORIGINAL (Cancela y vuelve ANTES de comprar)
+        
         protected void btnRegresar_Click(object sender, EventArgs e)
         {
             Response.Redirect("PantallaUSER.aspx");
         }
 
-        // EVENTO DEL NUEVO BOTÓN (Regresa DESPUÉS de un error o compra exitosa)
+        
         protected void btnIrCatalogo_Click(object sender, EventArgs e)
         {
             Response.Redirect("PantallaUSER.aspx");
@@ -164,12 +164,12 @@ namespace Proyecto_BDII
 
             conexion.Close();
 
-            // AL FINALIZAR: Ocultamos el carrito completo y mostramos el mensaje con el nuevo botón
+            
             pnlCarrito.Visible = false;
             lblMensaje.ForeColor = System.Drawing.Color.Green;
             lblMensaje.Text = "¡Compra procesada con éxito! Tu orden ha sido registrada.";
 
-            // Aquí activamos el nuevo botón de regreso
+            
             btnIrCatalogo.Visible = true;
         }
     }
