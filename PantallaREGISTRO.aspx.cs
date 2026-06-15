@@ -3,6 +3,7 @@ using System.Configuration;
 using System.Data.SqlClient;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Web.UI;
 
 namespace Proyecto_BDII
@@ -36,37 +37,34 @@ namespace Proyecto_BDII
             string password = txtPassword.Text;
             string password2 = txtPassword2.Text;
 
-            if (string.IsNullOrEmpty(nombre) || string.IsNullOrEmpty(correo) || string.IsNullOrEmpty(ci) || string.IsNullOrEmpty(password))
-            {
-                Msg("Nombre, correo, C.I. y contraseña son obligatorios.", true);
-                return;
-            }
+            // Validaciones de back-end
+            if (string.IsNullOrEmpty(nombre) || string.IsNullOrEmpty(correo) ||
+                string.IsNullOrEmpty(ci) || string.IsNullOrEmpty(password))
+            { Msg("Nombre, correo, C.I. y contraseña son obligatorios.", true); return; }
+
+            if (!Regex.IsMatch(correo, @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
+            { Msg("El formato del correo electrónico no es válido.", true); return; }
+
+            if (!Regex.IsMatch(ci, @"^\d{5,12}$"))
+            { Msg("El C.I. debe contener solo números (5-12 dígitos).", true); return; }
+
+            if (!string.IsNullOrEmpty(telefono) && !Regex.IsMatch(telefono, @"^[\+\d\s\-\(\)]{7,15}$"))
+            { Msg("El formato del teléfono no es válido.", true); return; }
 
             if (password != password2)
-            {
-                Msg("Las contraseñas no coinciden.", true);
-                return;
-            }
+            { Msg("Las contraseñas no coinciden.", true); return; }
 
             if (password.Length < 8)
-            {
-                Msg("La contraseña debe tener al menos 8 caracteres.", true);
-                return;
-            }
+            { Msg("La contraseña debe tener al menos 8 caracteres.", true); return; }
 
-            bool tieneMayuscula = false;
-            bool tieneNumero = false;
+            bool tieneMayuscula = false, tieneNumero = false;
             foreach (char c in password)
             {
                 if (char.IsUpper(c)) tieneMayuscula = true;
                 if (char.IsDigit(c)) tieneNumero = true;
             }
-
             if (!tieneMayuscula || !tieneNumero)
-            {
-                Msg("La contraseña debe tener al menos 1 mayúscula y 1 número.", true);
-                return;
-            }
+            { Msg("La contraseña debe tener al menos 1 mayúscula y 1 número.", true); return; }
 
             string hash = HashSHA256(password);
             string conectar = ConfigurationManager.ConnectionStrings["Mi Conexion"].ConnectionString;
@@ -74,19 +72,14 @@ namespace Proyecto_BDII
             using (SqlConnection con = new SqlConnection(conectar))
             {
                 con.Open();
-                string verificar = "SELECT COUNT(*) FROM usuario WHERE correo = @correo";
-                using (SqlCommand cmd = new SqlCommand(verificar, con))
+                using (SqlCommand cmd = new SqlCommand("SELECT COUNT(*) FROM usuario WHERE correo = @correo", con))
                 {
                     cmd.Parameters.AddWithValue("@correo", correo);
-                    int existe = (int)cmd.ExecuteScalar();
-                    if (existe > 0)
-                    {
-                        Msg("Este correo ya está registrado.", true);
-                        return;
-                    }
+                    if ((int)cmd.ExecuteScalar() > 0) { Msg("Este correo ya está registrado.", true); return; }
                 }
 
-                string insert = "INSERT INTO usuario (nombre, correo, contrasena, ci, telefono, direccion, rol) VALUES (@nombre, @correo, @pass, @ci, @tel, @dir, 'cliente')";
+                string insert = @"INSERT INTO usuario (nombre, correo, contrasena, ci, telefono, direccion, rol)
+                                  VALUES (@nombre, @correo, @pass, @ci, @tel, @dir, 'cliente')";
                 using (SqlCommand cmd = new SqlCommand(insert, con))
                 {
                     cmd.Parameters.AddWithValue("@nombre", nombre);
@@ -98,7 +91,6 @@ namespace Proyecto_BDII
                     cmd.ExecuteNonQuery();
                 }
             }
-
             Msg("¡Registro exitoso! Redirigiendo...", false);
             Response.AppendHeader("Refresh", "2;url=PantallaLOGIN.aspx");
         }

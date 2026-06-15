@@ -1,9 +1,9 @@
+// PantallaUSER.aspx.cs
 using System;
+using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
-using System.IO;
-using System.Text;
 using System.Web.UI;
 using System.Web.UI.WebControls;
 
@@ -13,16 +13,35 @@ namespace Proyecto_BDII
     {
         string conexionString = ConfigurationManager.ConnectionStrings["Mi Conexion"].ConnectionString;
 
+        // ── Helpers para CSS de stock (llamados desde el .aspx) ──────────────
+        protected string GetCardCss(object stockObj)
+        {
+            int s = Convert.ToInt32(stockObj);
+            if (s == 0) return "producto-card card-agotado";
+            if (s < 3) return "producto-card card-critico";
+            return "producto-card";
+        }
+        protected string GetStockCss(object stockObj)
+        {
+            int s = Convert.ToInt32(stockObj);
+            if (s == 0) return "stock-agotado";
+            if (s < 3) return "stock-critico";
+            return "";
+        }
+        protected string GetStockBadge(object stockObj)
+        {
+            int s = Convert.ToInt32(stockObj);
+            if (s == 0) return "<span class='badge-agotado'>AGOTADO</span>";
+            if (s < 3) return "<span class='badge-critico'>¡Últimas unidades!</span>";
+            return "";
+        }
+
         protected void Page_Load(object sender, EventArgs e)
         {
-            if (Session["Rol"] == null)
-            {
-                Response.Redirect("PantallaLOGIN.aspx");
-                return;
-            }
+            if (Session["Rol"] == null) { Response.Redirect("PantallaLOGIN.aspx"); return; }
             if (!IsPostBack)
             {
-                litNombre.Text = Session["NombreUsuario"] != null ? Session["NombreUsuario"].ToString() : "";
+                litNombre.Text = Session["NombreUsuario"]?.ToString() ?? "";
                 CargarCatalogo();
                 CargarFavoritos();
                 CargarHistorial();
@@ -31,11 +50,11 @@ namespace Proyecto_BDII
 
         private void CargarCatalogo()
         {
+            // Mostrar todos los productos (incluyendo agotados para mostrar alertas)
             string query = @"SELECT id_celular, marca, modelo, descripcion, precio, stock,
                      (SELECT TOP 1 url_imagen FROM celular_imagen WHERE celular_imagen.id_celular = celular.id_celular) AS url_imagen
-                     FROM celular WHERE stock > 0";
-            SqlConnection con = new SqlConnection(conexionString);
-            SqlDataAdapter da = new SqlDataAdapter(query, con);
+                     FROM celular ORDER BY stock DESC, marca";
+            SqlDataAdapter da = new SqlDataAdapter(query, conexionString);
             DataTable dt = new DataTable();
             da.Fill(dt);
             repCelulares.DataSource = dt;
@@ -47,19 +66,16 @@ namespace Proyecto_BDII
             if (Session["UsuarioID"] == null) return;
             int idUsuario = Convert.ToInt32(Session["UsuarioID"]);
             string query = @"SELECT c.id_celular, c.marca, c.modelo, c.precio
-                             FROM favorito f
-                             INNER JOIN celular c ON f.id_celular = c.id_celular
+                             FROM favorito f INNER JOIN celular c ON f.id_celular = c.id_celular
                              WHERE f.id_usuario = @id";
-            SqlConnection con = new SqlConnection(conexionString);
-            SqlCommand cmd = new SqlCommand(query, con);
+            SqlCommand cmd = new SqlCommand(query, new SqlConnection(conexionString));
             cmd.Parameters.AddWithValue("@id", idUsuario);
             SqlDataAdapter da = new SqlDataAdapter(cmd);
             DataTable dt = new DataTable();
             da.Fill(dt);
             repFavoritos.DataSource = dt;
             repFavoritos.DataBind();
-            if (dt.Rows.Count == 0)
-                lblMensajeFavoritos.Text = "No tienes productos en favoritos aún.";
+            if (dt.Rows.Count == 0) lblMensajeFavoritos.Text = "No tienes productos en favoritos aún.";
         }
 
         private void CargarHistorial()
@@ -67,65 +83,114 @@ namespace Proyecto_BDII
             if (Session["UsuarioID"] == null) return;
             int idUsuario = Convert.ToInt32(Session["UsuarioID"]);
             string query = @"SELECT v.id_venta, v.fecha, v.total, v.estado_venta, v.direccion_envio,
-                             ISNULL(p.nombre_empresa, 'Sin asignar') AS nombre_proveedor,
+                             ISNULL(p.nombre_empresa,'Sin asignar') AS nombre_proveedor,
                              CASE WHEN f.id_factura IS NOT NULL THEN 1 ELSE 0 END AS tiene_factura
                              FROM venta v
                              LEFT JOIN proveedor p ON v.id_proveedor_envio = p.id_proveedor
                              LEFT JOIN factura f ON v.id_venta = f.id_venta
-                             WHERE v.id_usuario = @id
-                             ORDER BY v.fecha DESC";
-            SqlConnection con = new SqlConnection(conexionString);
-            SqlCommand cmd = new SqlCommand(query, con);
+                             WHERE v.id_usuario = @id ORDER BY v.fecha DESC";
+            SqlCommand cmd = new SqlCommand(query, new SqlConnection(conexionString));
             cmd.Parameters.AddWithValue("@id", idUsuario);
             SqlDataAdapter da = new SqlDataAdapter(cmd);
             DataTable dt = new DataTable();
             da.Fill(dt);
             repHistorial.DataSource = dt;
             repHistorial.DataBind();
-            if (dt.Rows.Count == 0)
-                lblMensajeHistorial.Text = "No tienes compras registradas aún.";
+            if (dt.Rows.Count == 0) lblMensajeHistorial.Text = "No tienes compras registradas aún.";
         }
 
-        protected void btnFavorito_Click(object sender, EventArgs e)
+        // ── Catálogo: manejo unificado de comandos ────────────────────────────
+        protected void repCelulares_ItemCommand(object source, RepeaterCommandEventArgs e)
         {
-            if (Session["UsuarioID"] == null) { Response.Redirect("PantallaLOGIN.aspx"); return; }
-            Button btn = (Button)sender;
-            int idCelular = Convert.ToInt32(btn.CommandArgument);
-            int idUsuario = Convert.ToInt32(Session["UsuarioID"]);
-            SqlConnection con = new SqlConnection(conexionString);
-            string query = @"IF NOT EXISTS (SELECT 1 FROM favorito WHERE id_usuario=@u AND id_celular=@c)
-                             INSERT INTO favorito (id_usuario, id_celular) VALUES (@u, @c)";
-            SqlCommand cmd = new SqlCommand(query, con);
-            cmd.Parameters.AddWithValue("@u", idUsuario);
-            cmd.Parameters.AddWithValue("@c", idCelular);
-            con.Open(); cmd.ExecuteNonQuery(); con.Close();
-            CargarFavoritos();
+            int idCelular = Convert.ToInt32(e.CommandArgument);
+
+            if (e.CommandName == "Detalle")
+            {
+                Response.Redirect("DetalleProducto.aspx?id=" + idCelular);
+            }
+            else if (e.CommandName == "AgregarCarrito")
+            {
+                // Verificar stock antes de agregar
+                int stock = ObtenerStock(idCelular);
+                if (stock <= 0)
+                {
+                    MostrarMsgCatalogo("El producto está agotado.", true);
+                    return;
+                }
+
+                var carrito = Session["CarritoItems"] as List<CarritoItem> ?? new List<CarritoItem>();
+                var item = carrito.Find(i => i.IdCelular == idCelular);
+
+                if (item != null)
+                {
+                    if (item.Cantidad + 1 > stock)
+                    {
+                        MostrarMsgCatalogo($"Stock máximo disponible: {stock} unidades.", true);
+                        return;
+                    }
+                    item.Cantidad++;
+                    item.StockMax = stock;
+                }
+                else
+                {
+                    SqlCommand cmd = new SqlCommand(
+                        "SELECT marca, modelo, precio, stock FROM celular WHERE id_celular=@id",
+                        new SqlConnection(conexionString));
+                    cmd.Parameters.AddWithValue("@id", idCelular);
+                    cmd.Connection.Open();
+                    SqlDataReader r = cmd.ExecuteReader();
+                    if (r.Read())
+                        carrito.Add(new CarritoItem
+                        {
+                            IdCelular = idCelular,
+                            Nombre = r["marca"] + " " + r["modelo"],
+                            PrecioUnit = Convert.ToDecimal(r["precio"]),
+                            Cantidad = 1,
+                            StockMax = Convert.ToInt32(r["stock"])
+                        });
+                    cmd.Connection.Close();
+                }
+                Session["CarritoItems"] = carrito;
+                MostrarMsgCatalogo("Producto agregado al carrito. <a href='CarritoCompleto.aspx'>Ver carrito →</a>", false);
+            }
+            else if (e.CommandName == "Favorito")
+            {
+                if (Session["UsuarioID"] == null) { Response.Redirect("PantallaLOGIN.aspx"); return; }
+                int idUsuario = Convert.ToInt32(Session["UsuarioID"]);
+                SqlConnection con = new SqlConnection(conexionString);
+                SqlCommand cmd = new SqlCommand(
+                    @"IF NOT EXISTS (SELECT 1 FROM favorito WHERE id_usuario=@u AND id_celular=@c)
+                      INSERT INTO favorito (id_usuario, id_celular) VALUES (@u, @c)", con);
+                cmd.Parameters.AddWithValue("@u", idUsuario);
+                cmd.Parameters.AddWithValue("@c", idCelular);
+                con.Open(); cmd.ExecuteNonQuery(); con.Close();
+                CargarFavoritos();
+            }
         }
 
-        protected void btnEliminarFavorito_Click(object sender, EventArgs e)
+        protected void repFavoritos_ItemCommand(object source, RepeaterCommandEventArgs e)
         {
-            Button btn = (Button)sender;
-            int idCelular = Convert.ToInt32(btn.CommandArgument);
-            int idUsuario = Convert.ToInt32(Session["UsuarioID"]);
-            SqlConnection con = new SqlConnection(conexionString);
-            string query = "DELETE FROM favorito WHERE id_usuario=@u AND id_celular=@c";
-            SqlCommand cmd = new SqlCommand(query, con);
-            cmd.Parameters.AddWithValue("@u", idUsuario);
-            cmd.Parameters.AddWithValue("@c", idCelular);
-            con.Open(); cmd.ExecuteNonQuery(); con.Close();
-            CargarFavoritos();
+            if (e.CommandName == "EliminarFavorito")
+            {
+                int idCelular = Convert.ToInt32(e.CommandArgument);
+                int idUsuario = Convert.ToInt32(Session["UsuarioID"]);
+                SqlConnection con = new SqlConnection(conexionString);
+                SqlCommand cmd = new SqlCommand(
+                    "DELETE FROM favorito WHERE id_usuario=@u AND id_celular=@c", con);
+                cmd.Parameters.AddWithValue("@u", idUsuario);
+                cmd.Parameters.AddWithValue("@c", idCelular);
+                con.Open(); cmd.ExecuteNonQuery(); con.Close();
+                CargarFavoritos();
+            }
         }
 
-        protected void btnVerDetalle_Click(object sender, EventArgs e)
+        protected void repHistorial_ItemCommand(object source, RepeaterCommandEventArgs e)
         {
-            Button btn = (Button)sender;
-            Response.Redirect("DetalleProducto.aspx?id=" + btn.CommandArgument);
-        }
-
-        protected void btnComprar_Click(object sender, EventArgs e)
-        {
-            Button btn = (Button)sender;
-            Response.Redirect("Carrito.aspx?id=" + btn.CommandArgument);
+            if (e.CommandName == "DescargarPDF")
+            {
+                int idVenta = Convert.ToInt32(e.CommandArgument);
+                GenerarFacturaPDF(idVenta);
+            }
         }
 
         protected void btnLogout_Click(object sender, EventArgs e)
@@ -134,78 +199,60 @@ namespace Proyecto_BDII
             Response.Redirect("PantallaLOGIN.aspx");
         }
 
-        protected void btnDescargarPDF_Click(object sender, EventArgs e)
-        {
-            Button btn = (Button)sender;
-            int idVenta = Convert.ToInt32(btn.CommandArgument);
-            GenerarFacturaPDF(idVenta);
-        }
-
+        // ── PDF nativo con iTextSharp ─────────────────────────────────────────
         private void GenerarFacturaPDF(int idVenta)
         {
-            string queryFactura = @"SELECT f.numero_factura, f.fecha_emision, f.razon_social,
-                                    f.nit_ci_cliente, f.monto_total, f.metodo_pago,
-                                    v.estado_venta, v.direccion_envio,
-                                    ISNULL(p.nombre_empresa,'Sin asignar') AS proveedor_envio
-                                    FROM factura f
-                                    INNER JOIN venta v ON f.id_venta = v.id_venta
-                                    LEFT JOIN proveedor p ON v.id_proveedor_envio = p.id_proveedor
-                                    WHERE f.id_venta = @id";
-
-            string queryDetalle = @"SELECT c.marca, c.modelo, dv.cantidad, dv.precio_unitario, dv.subtotal
-                                    FROM detalle_venta dv
-                                    INNER JOIN celular c ON dv.id_celular = c.id_celular
-                                    WHERE dv.id_venta = @id";
+            string qF = @"SELECT f.numero_factura, f.fecha_emision, f.razon_social,
+                          f.nit_ci_cliente, f.monto_total, f.metodo_pago,
+                          v.estado_venta, v.direccion_envio,
+                          ISNULL(p.nombre_empresa,'Sin asignar') AS proveedor_envio
+                          FROM factura f INNER JOIN venta v ON f.id_venta=v.id_venta
+                          LEFT JOIN proveedor p ON v.id_proveedor_envio=p.id_proveedor
+                          WHERE f.id_venta=@id";
+            string qD = @"SELECT c.marca, c.modelo, dv.cantidad, dv.precio_unitario, dv.subtotal
+                          FROM detalle_venta dv INNER JOIN celular c ON dv.id_celular=c.id_celular
+                          WHERE dv.id_venta=@id";
 
             SqlConnection con = new SqlConnection(conexionString);
-            SqlCommand cmdF = new SqlCommand(queryFactura, con);
+            SqlCommand cmdF = new SqlCommand(qF, con);
             cmdF.Parameters.AddWithValue("@id", idVenta);
-            SqlDataAdapter daF = new SqlDataAdapter(cmdF);
-            DataTable dtF = new DataTable();
-
-            SqlCommand cmdD = new SqlCommand(queryDetalle, con);
+            SqlCommand cmdD = new SqlCommand(qD, con);
             cmdD.Parameters.AddWithValue("@id", idVenta);
-            SqlDataAdapter daD = new SqlDataAdapter(cmdD);
-            DataTable dtD = new DataTable();
-
-            daF.Fill(dtF);
-            daD.Fill(dtD);
-
+            DataTable dtF = new DataTable(), dtD = new DataTable();
+            new SqlDataAdapter(cmdF).Fill(dtF);
+            new SqlDataAdapter(cmdD).Fill(dtD);
             if (dtF.Rows.Count == 0) return;
-            DataRow f = dtF.Rows[0];
 
-            StringBuilder html = new StringBuilder();
-            html.Append("<!DOCTYPE html><html><head><meta charset='utf-8'/>");
-            html.Append("<style>body{font-family:Arial,sans-serif;padding:30px;color:#333;}");
-            html.Append("h2{color:#007bff;border-bottom:2px solid #007bff;padding-bottom:8px;}");
-            html.Append("table{width:100%;border-collapse:collapse;margin-top:15px;}");
-            html.Append("th,td{padding:9px 12px;border:1px solid #ddd;text-align:left;}");
-            html.Append("th{background:#f8f9fa;} .total{font-size:16px;font-weight:bold;text-align:right;margin-top:10px;}");
-            html.Append(".info p{margin:4px 0;font-size:14px;}</style></head><body>");
-            html.Append("<h2>FACTURA - Tienda de Celulares</h2>");
-            html.AppendFormat("<div class='info'><p><b>N° Factura:</b> {0}</p>", f["numero_factura"]);
-            html.AppendFormat("<p><b>Fecha:</b> {0:dd/MM/yyyy HH:mm}</p>", f["fecha_emision"]);
-            html.AppendFormat("<p><b>Cliente:</b> {0}</p>", f["razon_social"]);
-            html.AppendFormat("<p><b>C.I./NIT:</b> {0}</p>", f["nit_ci_cliente"]);
-            html.AppendFormat("<p><b>Método de pago:</b> {0}</p>", f["metodo_pago"]);
-            html.AppendFormat("<p><b>Dirección de envío:</b> {0}</p>", f["direccion_envio"]);
-            html.AppendFormat("<p><b>Proveedor de envío:</b> {0}</p></div>", f["proveedor_envio"]);
-
-            html.Append("<table><tr><th>Producto</th><th>Cantidad</th><th>Precio Unitario</th><th>Subtotal</th></tr>");
-            foreach (DataRow d in dtD.Rows)
-            {
-                html.AppendFormat("<tr><td>{0} {1}</td><td>{2}</td><td>Bs. {3:N2}</td><td>Bs. {4:N2}</td></tr>",
-                    d["marca"], d["modelo"], d["cantidad"], d["precio_unitario"], d["subtotal"]);
-            }
-            html.Append("</table>");
-            html.AppendFormat("<p class='total'>TOTAL: Bs. {0:N2}</p>", f["monto_total"]);
-            html.Append("</body></html>");
-
+            byte[] pdfBytes = PdfHelper.GenerarFacturaPdf(dtF.Rows[0], dtD);
             Response.Clear();
-            Response.ContentType = "text/html";
-            Response.AddHeader("Content-Disposition", "attachment; filename=Factura_" + f["numero_factura"] + ".html");
-            Response.Write(html.ToString());
+            Response.ContentType = "application/pdf";
+            Response.AddHeader("Content-Disposition",
+                "attachment; filename=Factura_" + dtF.Rows[0]["numero_factura"] + ".pdf");
+            Response.BinaryWrite(pdfBytes);
             Response.End();
+        }
+
+        // ── Helpers ───────────────────────────────────────────────────────────
+        private int ObtenerStock(int idCelular)
+        {
+            SqlCommand cmd = new SqlCommand(
+                "SELECT stock FROM celular WHERE id_celular=@id",
+                new SqlConnection(conexionString));
+            cmd.Parameters.AddWithValue("@id", idCelular);
+            cmd.Connection.Open();
+            int s = Convert.ToInt32(cmd.ExecuteScalar());
+            cmd.Connection.Close();
+            return s;
+        }
+
+        private void MostrarMsgCatalogo(string texto, bool esError)
+        {
+            lblMsgCatalogo.Text = texto;
+            lblMsgCatalogo.CssClass = esError ? "msg" : "msg";
+            lblMsgCatalogo.ForeColor = esError
+                ? System.Drawing.Color.Red
+                : System.Drawing.Color.Green;
+            lblMsgCatalogo.Visible = true;
         }
     }
 }

@@ -3,6 +3,7 @@ using System.Data;
 using System.Data.SqlClient;
 using System.IO;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Web.UI;
 using System.Web.UI.WebControls;
 
@@ -359,13 +360,20 @@ namespace Proyecto_BDII
         {
             if (string.IsNullOrEmpty(TxtProvEmpresa.Text) || string.IsNullOrEmpty(TxtProvNIT.Text))
             { MostrarMsg("Empresa y NIT son obligatorios.", true); return; }
+
+            // Validación de correo de proveedor en back-end
+            if (!string.IsNullOrEmpty(TxtProvCorreo.Text.Trim()) &&
+                !Regex.IsMatch(TxtProvCorreo.Text.Trim(), @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
+            { MostrarMsg("El formato del correo del proveedor no es válido.", true); return; }
+
             SqlConnection con = new SqlConnection(conexion);
-            SqlCommand cmd = new SqlCommand("INSERT INTO proveedor (nombre_empresa,nit_rut,contacto_nombre,telefono,correo,direccion) VALUES (@e,@n,@c,@t,@co,@d)", con);
+            SqlCommand cmd = new SqlCommand(
+                "INSERT INTO proveedor (nombre_empresa,nit_rut,contacto_nombre,telefono,correo,direccion) VALUES (@e,@n,@c,@t,@co,@d)", con);
             cmd.Parameters.AddWithValue("@e", TxtProvEmpresa.Text.Trim());
             cmd.Parameters.AddWithValue("@n", TxtProvNIT.Text.Trim());
             cmd.Parameters.AddWithValue("@c", TxtProvContacto.Text.Trim());
             cmd.Parameters.AddWithValue("@t", TxtProvTel.Text.Trim());
-            cmd.Parameters.AddWithValue("@co", TxtProvCorreo.Text.Trim());
+            cmd.Parameters.AddWithValue("@co", string.IsNullOrEmpty(TxtProvCorreo.Text.Trim()) ? (object)DBNull.Value : TxtProvCorreo.Text.Trim());
             cmd.Parameters.AddWithValue("@d", TxtProvDir.Text.Trim());
             con.Open();
             try { cmd.ExecuteNonQuery(); MostrarMsg("Proveedor registrado.", false); }
@@ -374,6 +382,8 @@ namespace Proyecto_BDII
             TxtProvEmpresa.Text = TxtProvNIT.Text = TxtProvContacto.Text = TxtProvTel.Text = TxtProvCorreo.Text = TxtProvDir.Text = "";
             CargarDatosProv(); CargarDropdowns();
         }
+
+
 
         protected void GridView4_RowEditing(object sender, GridViewEditEventArgs e)
         { 
@@ -528,39 +538,18 @@ namespace Proyecto_BDII
             SqlConnection con = new SqlConnection(conexion);
             SqlCommand cmdF = new SqlCommand(qF, con); cmdF.Parameters.AddWithValue("@id", idVenta);
             SqlCommand cmdD = new SqlCommand(qD, con); cmdD.Parameters.AddWithValue("@id", idVenta);
-            SqlDataAdapter daF = new SqlDataAdapter(cmdF), daD = new SqlDataAdapter(cmdD);
             DataTable dtF = new DataTable(), dtD = new DataTable();
-            daF.Fill(dtF); daD.Fill(dtD);
+            new SqlDataAdapter(cmdF).Fill(dtF);
+            new SqlDataAdapter(cmdD).Fill(dtD);
             if (dtF.Rows.Count == 0) return;
-            DataRow f = dtF.Rows[0];
 
-            StringBuilder html = new StringBuilder();
-            html.Append("<!DOCTYPE html><html><head><meta charset='utf-8'/>");
-            html.Append("<style>body{font-family:Arial,sans-serif;padding:30px;color:#333;}");
-            html.Append("h2{color:#007bff;border-bottom:2px solid #007bff;padding-bottom:8px;}");
-            html.Append("table{width:100%;border-collapse:collapse;margin-top:15px;}");
-            html.Append("th,td{padding:9px 12px;border:1px solid #ddd;}th{background:#f8f9fa;}");
-            html.Append(".total{font-size:16px;font-weight:bold;text-align:right;margin-top:10px;}");
-            html.Append(".info p{margin:4px 0;font-size:14px;}</style></head><body>");
-            html.Append("<h2>FACTURA - Tienda de Celulares</h2><div class='info'>");
-            html.AppendFormat("<p><b>N° Factura:</b> {0}</p>", f["numero_factura"]);
-            html.AppendFormat("<p><b>Fecha:</b> {0:dd/MM/yyyy HH:mm}</p>", f["fecha_emision"]);
-            html.AppendFormat("<p><b>Cliente:</b> {0}</p>", f["razon_social"]);
-            html.AppendFormat("<p><b>C.I./NIT:</b> {0}</p>", f["nit_ci_cliente"]);
-            html.AppendFormat("<p><b>Método de pago:</b> {0}</p>", f["metodo_pago"]);
-            html.AppendFormat("<p><b>Dirección de envío:</b> {0}</p>", f["direccion_envio"]);
-            html.AppendFormat("<p><b>Proveedor de envío:</b> {0}</p></div>", f["proveedor_envio"]);
-            html.Append("<table><tr><th>Producto</th><th>Cantidad</th><th>Precio Unit.</th><th>Subtotal</th></tr>");
-            foreach (DataRow d in dtD.Rows)
-                html.AppendFormat("<tr><td>{0} {1}</td><td>{2}</td><td>Bs.{3:N2}</td><td>Bs.{4:N2}</td></tr>",
-                    d["marca"], d["modelo"], d["cantidad"], d["precio_unitario"], d["subtotal"]);
-            html.Append("</table>");
-            html.AppendFormat("<p class='total'>TOTAL: Bs. {0:N2}</p></body></html>", f["monto_total"]);
-
+            // Genera PDF binario real usando iTextSharp
+            byte[] pdfBytes = PdfHelper.GenerarFacturaPdf(dtF.Rows[0], dtD);
             Response.Clear();
-            Response.ContentType = "text/html";
-            Response.AddHeader("Content-Disposition", "attachment; filename=Factura_" + f["numero_factura"] + ".html");
-            Response.Write(html.ToString());
+            Response.ContentType = "application/pdf";
+            Response.AddHeader("Content-Disposition",
+                "attachment; filename=Factura_" + dtF.Rows[0]["numero_factura"] + ".pdf");
+            Response.BinaryWrite(pdfBytes);
             Response.End();
         }
 
