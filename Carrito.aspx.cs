@@ -72,9 +72,37 @@ namespace Proyecto_BDII
         {
             int cant;
             if (!int.TryParse(txtCantidad.Text, out cant) || cant < 1)
+            {
                 txtCantidad.Text = "1";
+                cant = 1;
+            }
+
+            // Verificar contra stock real en BD
+            int idCelular;
+            if (Request.QueryString["id"] != null && int.TryParse(Request.QueryString["id"], out idCelular))
+            {
+                SqlConnection con = new SqlConnection(conexionString);
+                SqlCommand cmd = new SqlCommand("SELECT stock FROM celular WHERE id_celular=@id", con);
+                cmd.Parameters.AddWithValue("@id", idCelular);
+                con.Open();
+                int stockActual = Convert.ToInt32(cmd.ExecuteScalar());
+                con.Close();
+
+                if (cant > stockActual)
+                {
+                    lblMensaje.ForeColor = System.Drawing.Color.Red;
+                    lblMensaje.Text = $"⚠ Stock disponible: {stockActual} unidades. Cantidad ajustada.";
+                    txtCantidad.Text = stockActual.ToString();
+                    cant = stockActual;
+                }
+                else
+                {
+                    lblMensaje.Text = "";
+                }
+            }
+
             decimal precio = Convert.ToDecimal(litPrecioUnitario.Text);
-            litTotal.Text = string.Format("{0:N2}", precio * Convert.ToInt32(txtCantidad.Text));
+            litTotal.Text = string.Format("{0:N2}", precio * cant);
         }
 
         protected void btnRegresar_Click(object sender, EventArgs e)
