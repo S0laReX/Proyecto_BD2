@@ -1,9 +1,11 @@
 ﻿<%@ Control Language="C#" AutoEventWireup="true" CodeBehind="_Header.ascx.cs" Inherits="Proyecto_BDII._Header" %>
+
 <div class="istore-header">
     <div class="istore-brand">
-        <img src="logo_istore.png" alt="Logo" class="istore-logo" />
+        <asp:Image ID="imgLogo" runat="server" ImageUrl="~/logo_istore.png" AlternateText="Logo iStore" CssClass="istore-logo" />
         <span class="istore-title">iStore: Tienda de celulares</span>
     </div>
+    
     <nav class="istore-nav" id="navAdmin" runat="server" visible="false">
         <a href="PantallaADMIN.aspx#celulares">📱 Celulares</a>
         <a href="PantallaADMIN.aspx#categorias">🏷️ Categorías</a>
@@ -11,6 +13,7 @@
         <a href="PantallaADMIN.aspx#inventario">📦 Inventario</a>
         <a href="PantallaADMIN.aspx#ventas">📊 Ventas</a>
     </nav>
+    
     <nav class="istore-nav" id="navUser" runat="server" visible="false">
         <a href="PantallaUSER.aspx">🛍️ Catálogo</a>
         <a href="CarritoCompleto.aspx">🛒 Mi Carrito <asp:Literal ID="litContadorCarrito" runat="server"></asp:Literal></a>
@@ -18,6 +21,7 @@
         <a href="PantallaUSER.aspx#historial">📋 Mis Compras</a>
     </nav>
 </div>
+
 <style>
     .istore-header { display:flex; justify-content:space-between; align-items:center; background:#fff; border-bottom:2px solid #cc0000; padding:10px 20px; margin-bottom:20px; flex-wrap:wrap; gap:10px; }
     .istore-brand { display:flex; align-items:center; gap:10px; }

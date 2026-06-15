@@ -4,6 +4,8 @@ using System.Web.UI;
 using System.Configuration;
 using System.Security.Cryptography;
 using System.Text;
+using System.Net; // Requerido para la petición al servidor de Google
+using System.IO;  // Requerido para leer la respuesta de Google
 
 namespace Proyecto_BDII
 {
@@ -28,6 +30,31 @@ namespace Proyecto_BDII
             }
         }
 
+        // Método para verificar la validez del CAPTCHA con Google
+        private bool ValidarCaptcha()
+        {
+            string respuestaCaptcha = Request.Form["g-recaptcha-response"];
+            if (string.IsNullOrEmpty(respuestaCaptcha)) return false;
+
+            string claveSecreta = "6LeRCSAtAAAAAGSmhUPQRdXSgT2wFp-H2xOTwrk5";
+            try
+            {
+                HttpWebRequest req = (HttpWebRequest)WebRequest.Create($"https://www.google.com/recaptcha/api/siteverify?secret={claveSecreta}&response={respuestaCaptcha}");
+                using (WebResponse wResponse = req.GetResponse())
+                {
+                    using (StreamReader readStream = new StreamReader(wResponse.GetResponseStream()))
+                    {
+                        string jsonResponse = readStream.ReadToEnd();
+                        return jsonResponse.Contains("\"success\": true");
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
         protected void btnLogin_Click(object sender, EventArgs e)
         {
             string correo = txtCorreo.Text.Trim();
@@ -36,6 +63,14 @@ namespace Proyecto_BDII
             if (string.IsNullOrEmpty(correo) || string.IsNullOrEmpty(password))
             {
                 lblMensaje.Text = "Por favor, complete todos los campos.";
+                lblMensaje.Visible = true;
+                return;
+            }
+
+            // NUEVA VALIDACIÓN DEL CAPTCHA (BACK-END)
+            if (!ValidarCaptcha())
+            {
+                lblMensaje.Text = "Por favor, verifica que no eres un robot (Captcha inválido).";
                 lblMensaje.Visible = true;
                 return;
             }
