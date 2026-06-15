@@ -7,6 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Registro - iStore</title>
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: Arial, sans-serif; background-color: #f5f5f5; color: #333; }
@@ -18,11 +19,12 @@
         .campo input.input-error { border-color: #dc3545; }
         .campo-err { font-size: 12px; color: #dc3545; margin-top: 3px; display: none; }
         .hint { font-size: 12px; color: #888; margin-top: 3px; }
-        .btn-submit { padding: 9px 18px; background-color: #28a745; color: white; border: none; border-radius: 4px; font-size: 14px; font-weight: bold; cursor: pointer; }
+        .btn-submit { padding: 9px 18px; background-color: #28a745; color: white; border: none; border-radius: 4px; font-size: 14px; font-weight: bold; cursor: pointer; width: 100%; }
         .btn-submit:hover { background-color: #218838; }
         .msg-error { color: red; font-size: 13px; display: block; margin-top: 10px; }
         .msg-ok { color: green; font-size: 13px; display: block; margin-top: 10px; }
-        .link-alt { font-size: 13px; margin-top: 14px; }
+        .link-alt { font-size: 13px; margin-top: 14px; text-align: center; }
+        .captcha-container { margin-bottom: 15px; display: flex; flex-direction: column; align-items: center; }
     </style>
 </head>
 <body>
@@ -65,39 +67,56 @@
             <asp:TextBox ID="txtPassword2" runat="server" TextMode="Password" placeholder="Repite la contraseña"></asp:TextBox>
             <span id="errPass2" class="campo-err">Las contraseñas no coinciden.</span>
         </div>
+        
+        <div class="captcha-container">
+            <div class="g-recaptcha" data-sitekey="6LeRCSAtAAAAAKXsiIYdfoq5Tg-n_dhpf1mavzMX"></div>
+            <span id="errCaptcha" class="campo-err">Por favor, verifica que no eres un robot.</span>
+        </div>
+
         <asp:Button ID="btnRegistrar" runat="server" Text="Registrarse" CssClass="btn-submit"
             OnClientClick="return validarRegistro();" OnClick="btnRegistrar_Click" />
         <asp:Label ID="lblMensaje" runat="server" Visible="false"></asp:Label>
+        
         <div class="link-alt">
             ¿Ya tienes cuenta? <a href="PantallaLOGIN.aspx">Inicia sesión</a>
         </div>
     </div>
 </form>
-<script>
-function validarRegistro() {
-    var ok = true;
-    var ids = ['errNombre','errCorreo','errCI','errTel','errPass','errPass2'];
-    ids.forEach(function(id){ document.getElementById(id).style.display='none'; });
 
-    var nombre = document.getElementById('<%= txtNombre.ClientID %>').value.trim();
+<script>
+    function validarRegistro() {
+        var ok = true;
+        var ids = ['errNombre', 'errCorreo', 'errCI', 'errTel', 'errPass', 'errPass2', 'errCaptcha'];
+        ids.forEach(function (id) { document.getElementById(id).style.display = 'none'; });
+
+        var nombre = document.getElementById('<%= txtNombre.ClientID %>').value.trim();
     var correo = document.getElementById('<%= txtCorreo.ClientID %>').value.trim();
-    var ci     = document.getElementById('<%= txtCI.ClientID %>').value.trim();
+    var ci = document.getElementById('<%= txtCI.ClientID %>').value.trim();
     var tel    = document.getElementById('<%= txtTelefono.ClientID %>').value.trim();
     var pass   = document.getElementById('<%= txtPassword.ClientID %>').value;
     var pass2  = document.getElementById('<%= txtPassword2.ClientID %>').value;
-    var reCorreo = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    var reCI     = /^\d+$/;
-    var reTel    = /^[\+\d\s\-\(\)]{7,15}$/;
-    var rePass   = /^(?=.*[A-Z])(?=.*\d).{8,}$/;
 
-    if (!nombre) { document.getElementById('errNombre').style.display='block'; ok=false; }
-    if (!reCorreo.test(correo)) { document.getElementById('errCorreo').style.display='block'; ok=false; }
-    if (!reCI.test(ci) || ci.length < 5) { document.getElementById('errCI').style.display='block'; ok=false; }
-    if (tel && !reTel.test(tel)) { document.getElementById('errTel').style.display='block'; ok=false; }
-    if (!rePass.test(pass)) { document.getElementById('errPass').style.display='block'; ok=false; }
-    if (pass !== pass2) { document.getElementById('errPass2').style.display='block'; ok=false; }
-    return ok;
-}
+        var reCorreo = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        var reCI = /^\d+$/;
+        var reTel = /^[\+\d\s\-\(\)]{7,15}$/;
+        var rePass = /^(?=.*[A-Z])(?=.*\d).{8,}$/;
+
+        if (!nombre) { document.getElementById('errNombre').style.display = 'block'; ok = false; }
+        if (!reCorreo.test(correo)) { document.getElementById('errCorreo').style.display = 'block'; ok = false; }
+        if (!reCI.test(ci) || ci.length < 5) { document.getElementById('errCI').style.display = 'block'; ok = false; }
+        if (tel && !reTel.test(tel)) { document.getElementById('errTel').style.display = 'block'; ok = false; }
+        if (!rePass.test(pass)) { document.getElementById('errPass').style.display = 'block'; ok = false; }
+        if (pass !== pass2) { document.getElementById('errPass2').style.display = 'block'; ok = false; }
+
+        // Validación del CAPTCHA
+        var response = grecaptcha.getResponse();
+        if (response.length === 0) {
+            document.getElementById('errCaptcha').style.display = 'block';
+            ok = false;
+        }
+
+        return ok;
+    }
 </script>
 </body>
 </html>

@@ -50,7 +50,6 @@ namespace Proyecto_BDII
 
         private void CargarCatalogo()
         {
-            // Mostrar todos los productos (incluyendo agotados para mostrar alertas)
             string query = @"SELECT id_celular, marca, modelo, descripcion, precio, stock,
                      (SELECT TOP 1 url_imagen FROM celular_imagen WHERE celular_imagen.id_celular = celular.id_celular) AS url_imagen
                      FROM celular ORDER BY stock DESC, marca";
@@ -151,7 +150,10 @@ namespace Proyecto_BDII
                     cmd.Connection.Close();
                 }
                 Session["CarritoItems"] = carrito;
-                MostrarMsgCatalogo("Producto agregado al carrito. <a href='CarritoCompleto.aspx'>Ver carrito →</a>", false);
+
+                // CAMBIO AQUÍ: Se oculta el texto permanente de éxito y se dispara la notificación flotante
+                lblMsgCatalogo.Visible = false;
+                ClientScript.RegisterStartupScript(this.GetType(), "NotificationPopup", "mostrarNotificacion();", true);
             }
             else if (e.CommandName == "Favorito")
             {

@@ -49,6 +49,29 @@
         .historial-tabla th { background-color:#f8f9fa; color:#555; }
         .msg { font-size:14px; padding:10px; border-radius:4px; }
         .bienvenida { font-size:15px; color:#555; }
+
+        /* NUEVOS ESTILOS: Notificación Flotante (Toast) */
+        .toast-notificacion {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #28a745;
+            color: white;
+            padding: 16px 28px;
+            border-radius: 6px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            font-size: 15px;
+            font-weight: bold;
+            z-index: 10000;
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: opacity 0.4s ease, transform 0.4s ease;
+            pointer-events: none;
+        }
+        .toast-notificacion.mostrar {
+            opacity: 1;
+            transform: translateY(0);
+        }
     </style>
 </head>
 <body>
@@ -141,6 +164,22 @@
             <FooterTemplate></table></FooterTemplate>
         </asp:Repeater>
     </div>
+
+    <div id="toastNotification" class="toast-notificacion">
+        Agregado correctamente. Revise su carrito
+    </div>
+
+    <script type="text/javascript">
+        function mostrarNotificacion() {
+            var toast = document.getElementById("toastNotification");
+            toast.classList.add("mostrar");
+            
+            // Se oculta automáticamente después de 3 segundos
+            setTimeout(function () {
+                toast.classList.remove("mostrar");
+            }, 3000);
+        }
+    </script>
 </form>
 </body>
 </html>

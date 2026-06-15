@@ -5,6 +5,8 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Web.UI;
+using System.Net; // Requerido para la petición al servidor de Google
+using System.IO;  // Requerido para leer la respuesta de Google
 
 namespace Proyecto_BDII
 {
@@ -24,6 +26,31 @@ namespace Proyecto_BDII
                 StringBuilder sb = new StringBuilder();
                 foreach (byte b in bytes) sb.Append(b.ToString("X2"));
                 return sb.ToString();
+            }
+        }
+
+        // Método para verificar la validez del CAPTCHA con Google
+        private bool ValidarCaptcha()
+        {
+            string respuestaCaptcha = Request.Form["g-recaptcha-response"];
+            if (string.IsNullOrEmpty(respuestaCaptcha)) return false;
+
+            string claveSecreta = "6LeRCSAtAAAAAGSmhUPQRdXSgT2wFp-H2xOTwrk5";
+            try
+            {
+                HttpWebRequest req = (HttpWebRequest)WebRequest.Create($"https://www.google.com/recaptcha/api/siteverify?secret={claveSecreta}&response={respuestaCaptcha}");
+                using (WebResponse wResponse = req.GetResponse())
+                {
+                    using (StreamReader readStream = new StreamReader(wResponse.GetResponseStream()))
+                    {
+                        string jsonResponse = readStream.ReadToEnd();
+                        return jsonResponse.Contains("\"success\": true");
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                return false;
             }
         }
 
@@ -65,6 +92,13 @@ namespace Proyecto_BDII
             }
             if (!tieneMayuscula || !tieneNumero)
             { Msg("La contraseña debe tener al menos 1 mayúscula y 1 número.", true); return; }
+
+            // NUEVA VALIDACIÓN DEL CAPTCHA (BACK-END)
+            if (!ValidarCaptcha())
+            {
+                Msg("Por favor, verifica que no eres un robot (Captcha inválido).", true);
+                return;
+            }
 
             string hash = HashSHA256(password);
             string conectar = ConfigurationManager.ConnectionStrings["Mi Conexion"].ConnectionString;

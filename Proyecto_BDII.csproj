@@ -130,6 +130,7 @@
     <Content Include="DetalleProducto.aspx" />
     <Content Include="favicon.ico" />
     <Content Include="Global.asax" />
+    <Content Include="logo_istore.png" />
     <Content Include="PantallaADMIN.aspx" />
     <Content Include="PantallaLOGIN.aspx" />
     <Content Include="PantallaREGISTRO.aspx" />
