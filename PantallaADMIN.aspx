@@ -61,9 +61,9 @@
             OnRowEditing="GridView1_RowEditing" OnRowUpdating="GridView1_RowUpdating"
             OnRowCancelingEdit="GridView1_RowCancelingEdit" OnRowDeleting="GridView1_RowDeleting">
             <Columns>
-                <asp:BoundField DataField="id_celular" HeaderText="ID" ReadOnly="True"/>
-                <asp:BoundField DataField="marca" HeaderText="Marca"/>
-                <asp:BoundField DataField="modelo" HeaderText="Modelo"/>
+                <asp:BoundField DataField="id_celular" HeaderText="ID" ReadOnly="True" />
+                <asp:BoundField DataField="marca" HeaderText="Marca" />
+                <asp:BoundField DataField="modelo" HeaderText="Modelo" />
                 <asp:BoundField DataField="imei" HeaderText="IMEI"/>
                 <asp:BoundField DataField="capacidad_almacenamiento" HeaderText="Almac."/>
                 <asp:BoundField DataField="memoria_ram" HeaderText="RAM"/>

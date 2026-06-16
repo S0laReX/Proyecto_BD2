@@ -1,3 +1,4 @@
+using Microsoft.Ajax.Utilities;
 using System;
 using System.Data;
 using System.Data.SqlClient;
@@ -243,55 +244,60 @@ namespace Proyecto_BDII
         {
             int id = Convert.ToInt32(GridView1.DataKeys[e.RowIndex].Value);
             GridViewRow r = GridView1.Rows[e.RowIndex];
-            string marca = ((TextBox)r.Cells[1].Controls[0]).Text;
-            string modelo = ((TextBox)r.Cells[2].Controls[0]).Text;
-            string imei = ((TextBox)r.Cells[3].Controls[0]).Text;
-            string alm = ((TextBox)r.Cells[4].Controls[0]).Text;
-            string ram = ((TextBox)r.Cells[5].Controls[0]).Text;
-            string anoTxt = ((TextBox)r.Cells[6].Controls[0]).Text;
-            string so = ((TextBox)r.Cells[7].Controls[0]).Text;
-            string banda = ((TextBox)r.Cells[8].Controls[0]).Text;
-            string desc = ((TextBox)r.Cells[9].Controls[0]).Text;
-            int idCat = Convert.ToInt32(((DropDownList)r.FindControl("DdlCategoriaEdit")).SelectedValue);
-            int idProv = Convert.ToInt32(((DropDownList)r.FindControl("DdlProveedorEdit")).SelectedValue);
-            decimal precio = Convert.ToDecimal(((TextBox)r.Cells[12].Controls[0]).Text);
-            int stock = Convert.ToInt32(((TextBox)r.Cells[13].Controls[0]).Text);
+                string marca = ((TextBox)r.Cells[1].Controls[0]).Text;
+                string modelo = ((TextBox)r.Cells[2].Controls[0]).Text;
+                string imei = ((TextBox)r.Cells[3].Controls[0]).Text;
+                string alm = ((TextBox)r.Cells[4].Controls[0]).Text;
+                string ram = ((TextBox)r.Cells[5].Controls[0]).Text;
+                string anoTxt = ((TextBox)r.Cells[6].Controls[0]).Text;
+                string so = ((TextBox)r.Cells[7].Controls[0]).Text;
+                string banda = ((TextBox)r.Cells[8].Controls[0]).Text;
+                string desc = ((TextBox)r.Cells[9].Controls[0]).Text;
+                int idCat = Convert.ToInt32(((DropDownList)r.FindControl("DdlCategoriaEdit")).SelectedValue);
+                int idProv = Convert.ToInt32(((DropDownList)r.FindControl("DdlProveedorEdit")).SelectedValue);
+                decimal precio = Convert.ToDecimal(((TextBox)r.Cells[12].Controls[0]).Text);
+                int stock = Convert.ToInt32(((TextBox)r.Cells[13].Controls[0]).Text);
 
-            int? ano = null;
-            int anoVal; if (int.TryParse(anoTxt, out anoVal)) ano = anoVal;
+                int? ano = null;
+                int anoVal; if (int.TryParse(anoTxt, out anoVal)) ano = anoVal;
+                if(marca.IsNullOrWhiteSpace()|| modelo.IsNullOrWhiteSpace()|| imei.IsNullOrWhiteSpace() || alm.IsNullOrWhiteSpace() || ram.IsNullOrWhiteSpace() || anoTxt.IsNullOrWhiteSpace() || so.IsNullOrWhiteSpace() || banda.IsNullOrWhiteSpace() || desc.IsNullOrWhiteSpace() || precio == 0 || stock == 0)
+                {
+                    MostrarMsg("No puede Ingresar Espacios Vacios",true);
+                    return;
+                }
 
-            SqlConnection con = new SqlConnection(conexion);
-            string q = @"UPDATE celular SET marca=@m, modelo=@mo, imei=@imei, capacidad_almacenamiento=@alm,
+                SqlConnection con = new SqlConnection(conexion);
+                string q = @"UPDATE celular SET marca=@m, modelo=@mo, imei=@imei, capacidad_almacenamiento=@alm,
                          memoria_ram=@ram, ano_fabricacion=@ano, version_so=@so, numero_banda=@banda,
                          descripcion=@desc, id_categoria=@cat, id_proveedor=@prov, precio=@precio, stock=@stock
                          WHERE id_celular=@id";
-            SqlCommand cmd = new SqlCommand(q, con);
-            cmd.Parameters.AddWithValue("@m", marca); cmd.Parameters.AddWithValue("@mo", modelo);
-            cmd.Parameters.AddWithValue("@imei", string.IsNullOrEmpty(imei) ? (object)DBNull.Value : imei);
-            cmd.Parameters.AddWithValue("@alm", alm); cmd.Parameters.AddWithValue("@ram", ram);
-            cmd.Parameters.AddWithValue("@ano", ano.HasValue ? (object)ano.Value : DBNull.Value);
-            cmd.Parameters.AddWithValue("@so", so); cmd.Parameters.AddWithValue("@banda", banda);
-            cmd.Parameters.AddWithValue("@desc", desc); cmd.Parameters.AddWithValue("@cat", idCat);
-            cmd.Parameters.AddWithValue("@prov", idProv); cmd.Parameters.AddWithValue("@precio", precio);
-            cmd.Parameters.AddWithValue("@stock", stock); cmd.Parameters.AddWithValue("@id", id);
-            con.Open(); cmd.ExecuteNonQuery();
+                SqlCommand cmd = new SqlCommand(q, con);
+                cmd.Parameters.AddWithValue("@m", marca); cmd.Parameters.AddWithValue("@mo", modelo);
+                cmd.Parameters.AddWithValue("@imei", string.IsNullOrEmpty(imei) ? (object)DBNull.Value : imei);
+                cmd.Parameters.AddWithValue("@alm", alm); cmd.Parameters.AddWithValue("@ram", ram);
+                cmd.Parameters.AddWithValue("@ano", ano.HasValue ? (object)ano.Value : DBNull.Value);
+                cmd.Parameters.AddWithValue("@so", so); cmd.Parameters.AddWithValue("@banda", banda);
+                cmd.Parameters.AddWithValue("@desc", desc); cmd.Parameters.AddWithValue("@cat", idCat);
+                cmd.Parameters.AddWithValue("@prov", idProv); cmd.Parameters.AddWithValue("@precio", precio);
+                cmd.Parameters.AddWithValue("@stock", stock); cmd.Parameters.AddWithValue("@id", id);
+                con.Open(); cmd.ExecuteNonQuery();
 
-            FileUpload fu = (FileUpload)r.FindControl("FuImagenEdit");
-            if (fu != null && fu.HasFile)
-            {
-                string nombre = id + "_" + Path.GetFileName(fu.FileName);
-                fu.SaveAs(Server.MapPath("~/uploads/" + nombre));
-                string url = "uploads/" + nombre;
-                SqlCommand ci = new SqlCommand(@"IF EXISTS (SELECT 1 FROM celular_imagen WHERE id_celular=@id)
+                FileUpload fu = (FileUpload)r.FindControl("FuImagenEdit");
+                if (fu != null && fu.HasFile)
+                {
+                    string nombre = id + "_" + Path.GetFileName(fu.FileName);
+                    fu.SaveAs(Server.MapPath("~/uploads/" + nombre));
+                    string url = "uploads/" + nombre;
+                    SqlCommand ci = new SqlCommand(@"IF EXISTS (SELECT 1 FROM celular_imagen WHERE id_celular=@id)
                     UPDATE celular_imagen SET url_imagen=@url WHERE id_imagen=(SELECT TOP 1 id_imagen FROM celular_imagen WHERE id_celular=@id)
                     ELSE INSERT INTO celular_imagen (id_celular, url_imagen) VALUES (@id,@url)", con);
-                ci.Parameters.AddWithValue("@id", id); ci.Parameters.AddWithValue("@url", url);
-                ci.ExecuteNonQuery();
+                    ci.Parameters.AddWithValue("@id", id); ci.Parameters.AddWithValue("@url", url);
+                    ci.ExecuteNonQuery();
+                }
+                con.Close();
+                GridView1.EditIndex = -1;
+                CargarDatosCel();
             }
-            con.Close();
-            GridView1.EditIndex = -1;
-            CargarDatosCel();
-        }
 
         protected void GridView1_RowCancelingEdit(object sender, GridViewCancelEditEventArgs e) 
         {
